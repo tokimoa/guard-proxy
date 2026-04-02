@@ -1,0 +1,57 @@
+name: Nightly Test
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # Every day at 3:00 UTC
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+      - run: uv sync --frozen
+
+      - name: Run lint
+        run: uv run ruff check . && uv run ruff format --check .
+
+      - name: Run full test suite
+        run: uv run pytest -v --tb=short
+
+      - name: Run benchmark tests
+        run: uv run pytest tests/test_benchmark/ -v --tb=short
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `Nightly test failure — ${new Date().toISOString().split('T')[0]}`;
+            // Check if issue already exists (avoid duplicates)
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'nightly-failure',
+              per_page: 1,
+            });
+            if (existing.data.length > 0) {
+              // Update existing issue instead of creating new one
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body: `Still failing as of ${new Date().toISOString()}\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: `Nightly test suite failed.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nPlease investigate and fix.`,
+                labels: ['nightly-failure', 'bug'],
+              });
+            }

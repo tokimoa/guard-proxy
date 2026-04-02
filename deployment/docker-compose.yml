@@ -1,0 +1,22 @@
+services:
+  guard-proxy:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    ports:
+      - "4873:4873"   # npm proxy
+      - "4874:4874"   # PyPI proxy
+      - "4875:4875"   # RubyGems proxy
+      - "8100:8100"   # Admin API
+    environment:
+      - COOLDOWN_DAYS=7
+      - DECISION_MODE=warn
+      - STATIC_ANALYSIS_ENABLED=true
+      - LLM_ENABLED=${LLM_ENABLED:-false}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - guard-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  guard-data:

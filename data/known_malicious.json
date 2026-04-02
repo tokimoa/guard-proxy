@@ -1,0 +1,125 @@
+{
+  "_description": "既知の悪意あるパッケージとIOC（Indicator of Compromise）データベース",
+  "_last_updated": "2026-04-02",
+  "malicious_packages": {
+    "npm": [
+      {
+        "name": "axios",
+        "versions": ["1.14.1", "0.30.4"],
+        "type": "account_hijack",
+        "date": "2026-03-31",
+        "description": "RAT dropper via plain-crypto-js dependency"
+      },
+      {
+        "name": "plain-crypto-js",
+        "versions": ["4.2.1"],
+        "type": "malicious_dependency",
+        "date": "2026-03-31",
+        "description": "Malicious dependency injected into axios"
+      },
+      {
+        "name": "event-stream",
+        "versions": ["3.3.6"],
+        "type": "account_hijack",
+        "date": "2018-11-26",
+        "description": "Cryptocurrency wallet stealer via flatmap-stream"
+      },
+      {
+        "name": "ua-parser-js",
+        "versions": ["0.7.29", "0.8.0", "1.0.0"],
+        "type": "account_hijack",
+        "date": "2021-10-22",
+        "description": "Cryptominer and password stealer injected via compromised account"
+      },
+      {
+        "name": "coa",
+        "versions": ["2.0.3", "2.0.4", "2.1.1", "2.1.3", "3.0.1", "3.1.3"],
+        "type": "account_hijack",
+        "date": "2021-11-04",
+        "description": "Compromised npm package used to distribute malware"
+      },
+      {
+        "name": "rc",
+        "versions": ["1.2.9", "1.3.9", "2.3.9"],
+        "type": "account_hijack",
+        "date": "2021-11-04",
+        "description": "Compromised npm package"
+      },
+      {
+        "name": "colors",
+        "versions": ["1.4.44-liberty-2"],
+        "type": "protestware",
+        "date": "2022-01-08",
+        "description": "Infinite loop protestware by maintainer"
+      }
+    ],
+    "pypi": [
+      {
+        "name": "litellm",
+        "versions": ["1.82.7", "1.82.8"],
+        "type": "ci_compromise",
+        "date": "2026-03-24",
+        "description": "Credential stealer via malicious .pth file"
+      },
+      {
+        "name": "ctx",
+        "versions": ["0.1.2", "0.2.0"],
+        "type": "account_hijack",
+        "date": "2022-05-21",
+        "description": "Credential stealer targeting AWS keys and env vars"
+      },
+      {
+        "name": "phpass",
+        "versions": ["0.9.99"],
+        "type": "typosquat",
+        "date": "2022-06-01",
+        "description": "Typosquat of phpass PHP library"
+      },
+      {
+        "name": "ultralytics",
+        "versions": ["8.3.41", "8.3.42"],
+        "type": "ci_compromise",
+        "date": "2024-12-04",
+        "description": "Build pipeline compromise via GitHub Actions injection"
+      }
+    ],
+    "rubygems": [
+      {
+        "name": "atlas-client",
+        "versions": ["1.2.0"],
+        "type": "credential_stealer",
+        "date": "2019-08-19",
+        "description": "Credential stealer targeting .credentials files"
+      },
+      {
+        "name": "rest-client",
+        "versions": ["1.6.13"],
+        "type": "account_hijack",
+        "date": "2019-08-19",
+        "description": "Backdoor injected via compromised maintainer account"
+      },
+      {
+        "name": "strong_password",
+        "versions": ["0.0.7"],
+        "type": "account_hijack",
+        "date": "2019-07-08",
+        "description": "Cryptocurrency mining code injected"
+      }
+    ]
+  },
+  "c2_domains": [
+    "sfrclak.com",
+    "evilpackage.com",
+    "npm-stats.com",
+    "pypi-analytics.com"
+  ],
+  "c2_domain_suffixes": [
+    ".sfrclak.com"
+  ],
+  "c2_ips": [
+    "142.11.206.73"
+  ],
+  "malicious_hashes": {
+    "sha256": []
+  }
+}

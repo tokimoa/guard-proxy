@@ -1,0 +1,83 @@
+name: Weekly IOC Sync
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Every Monday at 6:00 UTC
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+      - run: uv sync --frozen
+
+      - name: Check for existing open PR
+        id: check_pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:auto/ioc-sync`,
+            });
+            core.setOutput('has_open_pr', prs.data.length > 0 ? 'true' : 'false');
+
+      - name: Skip if PR already open
+        if: steps.check_pr.outputs.has_open_pr == 'true'
+        run: echo "Open IOC sync PR already exists — skipping"
+
+      - name: Record current IOC count
+        if: steps.check_pr.outputs.has_open_pr != 'true'
+        id: before
+        run: |
+          COUNT=$(python3 -c "import json; d=json.load(open('data/known_malicious.json')); print(sum(len(v) for v in d.get('malicious_packages',{}).values()))")
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+
+      - name: Sync IOC from DataDog
+        if: steps.check_pr.outputs.has_open_pr != 'true'
+        run: uv run guard-proxy sync-ioc
+
+      - name: Record new IOC count
+        if: steps.check_pr.outputs.has_open_pr != 'true'
+        id: after
+        run: |
+          COUNT=$(python3 -c "import json; d=json.load(open('data/known_malicious.json')); print(sum(len(v) for v in d.get('malicious_packages',{}).values()))")
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          DIFF=$((COUNT - ${{ steps.before.outputs.count }}))
+          echo "diff=$DIFF" >> "$GITHUB_OUTPUT"
+
+      - name: Run tests with new IOC
+        if: steps.check_pr.outputs.has_open_pr != 'true' && steps.after.outputs.diff > 50
+        run: uv run pytest -q --tb=short
+
+      - name: Create PR if significant changes
+        if: steps.check_pr.outputs.has_open_pr != 'true' && steps.after.outputs.diff > 50
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: auto/ioc-sync
+          commit-message: "chore: sync IOC database from DataDog (${{ steps.after.outputs.diff }} new entries)"
+          title: "chore: IOC database update (+${{ steps.after.outputs.diff }} entries)"
+          body: |
+            ## IOC Database Sync
+
+            Automated sync from [DataDog malicious-software-packages-dataset](https://github.com/DataDog/malicious-software-packages-dataset).
+
+            - **Before**: ${{ steps.before.outputs.count }} entries
+            - **After**: ${{ steps.after.outputs.count }} entries
+            - **New entries**: ${{ steps.after.outputs.diff }}
+
+            All tests pass with the updated IOC database.
+
+            ---
+            🤖 This PR was automatically created by the weekly IOC sync workflow.
+          labels: ioc-update

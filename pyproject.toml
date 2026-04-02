@@ -1,0 +1,117 @@
+[project]
+name = "guard-proxy"
+version = "0.1.0"
+description = "Supply chain security proxy for npm, PyPI, and RubyGems — blocks malicious packages before they execute"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12,<3.13"
+authors = [
+    { name = "Takuya Omi", email = "takuya.omi@tokimoa.jp" },
+]
+maintainers = [
+    { name = "Takuya Omi", email = "takuya.omi@tokimoa.jp" },
+]
+keywords = [
+    "security",
+    "supply-chain",
+    "proxy",
+    "npm",
+    "pypi",
+    "rubygems",
+    "malware-detection",
+    "llm",
+    "ollama",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Framework :: FastAPI",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: System :: Systems Administration",
+    "Typing :: Typed",
+]
+dependencies = [
+    # Web Framework
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    # HTTP Client
+    "httpx>=0.27.0",
+    # Data Validation
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.0.0",
+    # Database
+    "sqlalchemy>=2.0.0",
+    "aiosqlite>=0.20.0",
+    "greenlet>=3.0.0",
+    # CLI
+    "typer>=0.15.0",
+    "rich>=13.0.0",
+    # Logging
+    "loguru>=0.7.0",
+    # LLM Providers
+    "anthropic>=0.40.0",
+    "openai>=1.60.0",
+    # Package handling
+    "packaging>=24.0",
+    # AST analysis
+    "pyjsparser>=2.7.0",
+    # YARA rule parsing (pure Python, no C dependency)
+    "plyara>=2.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/tokimoa/guard-proxy"
+Repository = "https://github.com/tokimoa/guard-proxy"
+Documentation = "https://github.com/tokimoa/guard-proxy/tree/main/docs"
+"Bug Tracker" = "https://github.com/tokimoa/guard-proxy/issues"
+Changelog = "https://github.com/tokimoa/guard-proxy/blob/main/CHANGELOG.md"
+
+[project.scripts]
+guard-proxy = "cli.main:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.0.0",
+    "pytest-cov>=5.0.0",
+    "pytest-mock>=3.14.0",
+    "ruff>=0.8.0",
+    "pre-commit>=4.3.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app", "cli"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint.per-file-ignores]
+"tests/test_benchmark/*" = ["E501"]  # Attack payload strings are necessarily long
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["app", "cli"]

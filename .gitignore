@@ -1,0 +1,102 @@
+# ==============================================================
+# Guard Proxy .gitignore
+# ==============================================================
+
+# ----- Python -----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+.eggs/
+
+# ----- Build artifacts -----
+dist/
+build/
+*.whl
+*.tar.gz
+
+# ----- Virtual Environment -----
+.venv/
+venv/
+.python-version
+
+# ----- Environment / Secrets -----
+# CRITICAL: never commit .env (contains API keys)
+.env
+.env.local
+.env.production
+.env.staging
+.env.*.local
+# Only .env.example is committed
+!.env.example
+
+# ----- Database (runtime data, not source) -----
+data/*.db
+data/*.db-wal
+data/*.db-shm
+*.sqlite3
+
+# ----- IDE / Editor -----
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# ----- OS -----
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ----- Debug -----
+debug/*
+!debug/.gitkeep
+
+# ----- Testing -----
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# ----- Linting / Formatting -----
+.ruff_cache/
+.mypy_cache/
+
+# ----- Logging -----
+*.log
+logs/
+
+# ----- uv -----
+uv.lock
+
+# ----- Claude Code (AI assistant working files) -----
+.claude/
+
+# ----- Temporary files -----
+tmp/
+temp/
+*.tmp
+*.bak
+*.orig
+
+# ----- Secrets / Credentials (catch-all safety net) -----
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+credentials.json
+service-account*.json
+secrets.yaml
+secrets.yml
