@@ -71,8 +71,11 @@ class AnthropicProvider:
                 latency_ms=elapsed,
             )
 
+        raw_verdict = str(tool_result.get("verdict", "suspicious")).strip().lower()
+        valid_verdicts = {"safe", "suspicious", "malicious"}
+        verdict = raw_verdict if raw_verdict in valid_verdicts else "suspicious"
         return JudgeResult(
-            verdict=tool_result.get("verdict", "suspicious"),
+            verdict=verdict,
             reasons=tool_result.get("reasons", []),
             confidence=tool_result.get("confidence", 0.5),
             suspicious_lines=tool_result.get("suspicious_lines", []),

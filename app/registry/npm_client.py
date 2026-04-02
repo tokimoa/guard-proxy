@@ -91,6 +91,7 @@ class NpmRegistryClient:
 
     async def download_tarball(self, tarball_url: str) -> bytes:
         """Download tarball content from the given URL."""
+        self._validate_upstream_url(tarball_url)
         try:
             response = await self._client.get(tarball_url)
         except httpx.HTTPError as e:
@@ -106,6 +107,8 @@ class NpmRegistryClient:
 
     async def forward_request(self, method: str, path: str, headers: dict | None = None) -> httpx.Response:
         """Forward an arbitrary request to the upstream registry."""
+        if "://" in path:
+            raise UpstreamRegistryError(url=path, detail="Absolute URLs not allowed in forward_request")
         try:
             response = await self._client.request(
                 method=method,
@@ -118,6 +121,20 @@ class NpmRegistryClient:
                 detail=str(e),
             ) from e
         return response
+
+    def _validate_upstream_url(self, url: str) -> None:
+        """Reject URLs that don't point to the configured upstream (SSRF prevention)."""
+        from urllib.parse import urlparse
+
+        if not url.startswith(("http://", "https://")):
+            return  # Relative URL — safe, httpx will resolve against base_url
+        parsed = urlparse(url)
+        upstream_parsed = urlparse(self._upstream_url)
+        if parsed.hostname != upstream_parsed.hostname:
+            raise UpstreamRegistryError(
+                url=url,
+                detail=f"URL host {parsed.hostname} does not match upstream {upstream_parsed.hostname}",
+            )
 
     async def close(self) -> None:
         await self._client.aclose()

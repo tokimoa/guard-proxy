@@ -20,7 +20,7 @@ console = Console()
 
 @app.command()
 def start(
-    host: str = typer.Option("0.0.0.0", help="Bind host"),
+    host: str = typer.Option("127.0.0.1", help="Bind host (use 0.0.0.0 for network access)"),
     port: int = typer.Option(None, help="Bind port (default: from config)"),
     reload: bool = typer.Option(False, help="Enable auto-reload for development"),
 ) -> None:
@@ -82,7 +82,7 @@ def sbom_export(
                     ],
                 }
             )
-            await db.close()
+        await db.close()
 
         from datetime import UTC, datetime
 
@@ -154,10 +154,11 @@ def config() -> None:
     table.add_column("Value", style="green")
 
     # Redact secrets
-    for key in ("anthropic_api_key", "openai_api_key", "custom_llm_api_key"):
+    secret_keys = ("anthropic_api_key", "openai_api_key", "custom_llm_api_key", "slack_webhook_url")
+    for key in secret_keys:
         val = data.get(key, "")
         if val:
-            data[key] = val[:8] + "..."
+            data[key] = val[:4] + "****"
 
     for key, val in sorted(data.items()):
         table.add_row(key, str(val))
@@ -205,7 +206,10 @@ def scan(
     registry: str = typer.Option("npm", help="Registry: npm or pypi"),
 ) -> None:
     """Manually scan a package."""
-    if "@" in package and not package.startswith("@"):
+    # Handle scoped packages: @scope/pkg@1.0.0 → name=@scope/pkg, ver=1.0.0
+    if package.startswith("@") and package.count("@") >= 2:
+        name, ver = package.rsplit("@", 1)
+    elif "@" in package and not package.startswith("@"):
         name, ver = package.rsplit("@", 1)
     else:
         name = package

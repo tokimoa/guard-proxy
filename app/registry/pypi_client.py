@@ -65,6 +65,7 @@ class PyPIRegistryClient:
 
     async def download_artifact(self, url: str) -> bytes:
         """Download a whl/sdist from the given URL."""
+        self._validate_download_url(url)
         try:
             response = await self._client.get(url)
         except httpx.HTTPError as e:
@@ -74,6 +75,21 @@ class PyPIRegistryClient:
             raise UpstreamRegistryError(url=url, status_code=response.status_code)
 
         return response.content
+
+    _ALLOWED_PYPI_HOSTS = {"files.pythonhosted.org", "pypi.org", "pypi.io"}
+
+    def _validate_download_url(self, url: str) -> None:
+        """Reject download URLs pointing to unexpected hosts (SSRF prevention)."""
+        from urllib.parse import urlparse
+
+        parsed = urlparse(url)
+        upstream_host = urlparse(self._upstream_url).hostname
+        allowed = self._ALLOWED_PYPI_HOSTS | ({upstream_host} if upstream_host else set())
+        if parsed.hostname and parsed.hostname not in allowed:
+            raise UpstreamRegistryError(
+                url=url,
+                detail=f"Download host {parsed.hostname} not in allowed list",
+            )
 
     async def close(self) -> None:
         await self._client.aclose()

@@ -35,11 +35,14 @@ async def package_not_found_handler(request: Request, exc: PackageNotFoundError)
 
 
 async def upstream_error_handler(request: Request, exc: UpstreamRegistryError) -> JSONResponse:
+    from loguru import logger
+
+    logger.error("Upstream error: {exc}", exc=str(exc))
     return JSONResponse(
         status_code=502,
         content={
             "error": "upstream_error",
-            "detail": str(exc),
+            "detail": "Failed to reach upstream registry",
         },
     )
 

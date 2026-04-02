@@ -48,7 +48,8 @@ class DecisionEngine:
             verdict_score = _VERDICT_SCORES.get(result.verdict, 0.0)
             final_score += weight * verdict_score * result.confidence
 
-        final_score = round(final_score, 4)
+        # Cap at 1.0 to prevent unbounded scores when many scanners fire
+        final_score = round(min(final_score, 1.0), 4)
 
         if final_score >= self._deny_threshold:
             raw_verdict = "deny"

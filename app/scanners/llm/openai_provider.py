@@ -74,8 +74,11 @@ class OpenAIProvider:
             )
 
         usage = response.usage
+        raw_verdict = str(parsed.get("verdict", "suspicious")).strip().lower()
+        valid_verdicts = {"safe", "suspicious", "malicious"}
+        verdict = raw_verdict if raw_verdict in valid_verdicts else "suspicious"
         return JudgeResult(
-            verdict=parsed.get("verdict", "suspicious"),
+            verdict=verdict,
             reasons=parsed.get("reasons", []),
             confidence=parsed.get("confidence", 0.5),
             suspicious_lines=parsed.get("suspicious_lines", []),

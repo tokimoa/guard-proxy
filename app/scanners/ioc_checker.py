@@ -74,16 +74,20 @@ class IOCDatabase:
 
     def check_content_for_iocs(self, content: str) -> list[str]:
         """Scan content for known C2 domains, domain suffixes, and IPs."""
+        import re
+
         findings: list[str] = []
         content_lower = content.lower()
         for domain in self._c2_domains:
-            if domain.lower() in content_lower:
+            # Word-boundary matching to avoid "medieval.com" matching "evil.com"
+            if re.search(r"(?<![a-zA-Z0-9.-])" + re.escape(domain.lower()) + r"(?![a-zA-Z0-9.-])", content_lower):
                 findings.append(f"Known C2 domain: {domain}")
         for suffix in self._c2_domain_suffixes:
             if suffix.lower() in content_lower:
                 findings.append(f"Known C2 domain suffix: *{suffix}")
         for ip in self._c2_ips:
-            if ip in content:
+            # Ensure IP is not part of a larger number
+            if re.search(r"(?<!\d)" + re.escape(ip) + r"(?!\d)", content):
                 findings.append(f"Known C2 IP: {ip}")
         return findings
 

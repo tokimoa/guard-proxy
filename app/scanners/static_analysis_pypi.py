@@ -45,14 +45,18 @@ class PyPIStaticAnalysisScanner:
             except OSError:
                 continue
 
-            # Check false positive indicators
-            if self._is_likely_safe(content):
-                continue
+            # Track if file has false-positive indicators (reduces confidence, but does NOT skip)
+            has_safe_indicators = self._is_likely_safe(content)
 
             # .pth files are inherently suspicious
             is_pth = artifact_path.suffix == ".pth"
 
             matches = self._scan_content(content, artifact_path.name, is_pth)
+            if has_safe_indicators:
+                # Downgrade critical to high for files with build tool indicators (e.g., cythonize)
+                for m in matches:
+                    if m.severity == "critical":
+                        m.severity = "high"
             all_matches.extend(matches)
             if not is_pth:
                 ml_matches = self._scan_content_multiline(content, artifact_path.name)
