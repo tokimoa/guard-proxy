@@ -6,10 +6,10 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12,<3.13"
 authors = [
-    { name = "Takuya Omi", email = "takuya.omi@tokimoa.jp" },
+    { name = "tokimoa", email = "security@tokimoa.jp" },
 ]
 maintainers = [
-    { name = "Takuya Omi", email = "takuya.omi@tokimoa.jp" },
+    { name = "tokimoa", email = "security@tokimoa.jp" },
 ]
 keywords = [
     "security",

@@ -6,7 +6,7 @@ If you discover a security vulnerability in Guard Proxy, please report it respon
 
 **Do NOT open a public GitHub issue for security vulnerabilities.**
 
-Instead, please email: **takuya.omi@tokimoa.jp**
+Instead, please email: **security@tokimoa.jp**
 
 Include the following in your report:
 

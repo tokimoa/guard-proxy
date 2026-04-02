@@ -299,4 +299,4 @@ To report a security vulnerability, see [SECURITY.md](SECURITY.md). **Do not ope
 
 ## License
 
-[MIT](LICENSE) — Copyright (c) 2026 Takuya Omi / tokimoa
+[MIT](LICENSE) — Copyright (c) 2026 tokimoa
