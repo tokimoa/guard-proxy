@@ -202,6 +202,28 @@ class _PythonSecurityVisitor(ast.NodeVisitor):
         self.findings: list[ASTFinding] = []
         self._tainted_vars: set[str] = set()  # vars that hold dangerous values
         self._dangerous_aliases: dict[str, str] = {}  # var_name → original function
+        self._import_aliases: dict[str, str] = {}  # alias → real module (e.g. sp → subprocess)
+
+    def visit_Import(self, node: ast.Import) -> None:
+        """Track import aliases: import subprocess as sp."""
+        for alias in node.names:
+            real_name = alias.name
+            local_name = alias.asname or alias.name
+            self._import_aliases[local_name] = real_name
+        self.generic_visit(node)
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        """Track from-imports: from os import system; from subprocess import run as r."""
+        module = node.module or ""
+        for alias in node.names:
+            real_name = f"{module}.{alias.name}" if module else alias.name
+            local_name = alias.asname or alias.name
+            self._import_aliases[local_name] = real_name
+            # Direct import of dangerous function: from os import system
+            if real_name in _PYTHON_DANGEROUS_ATTRS or alias.name in _PYTHON_DANGEROUS_CALLS:
+                self._tainted_vars.add(local_name)
+                self._dangerous_aliases[local_name] = real_name
+        self.generic_visit(node)
 
     def visit_Assign(self, node: ast.Assign) -> None:
         """Track assignments of dangerous functions to variables."""
@@ -289,14 +311,18 @@ class _PythonSecurityVisitor(ast.NodeVisitor):
 
         self.generic_visit(node)
 
-    @staticmethod
-    def _get_attr_str(node: ast.Attribute) -> str:
-        """Resolve dotted attribute access to string: os.environ → 'os.environ'."""
+    def _get_attr_str(self, node: ast.Attribute) -> str:
+        """Resolve dotted attribute access to string, resolving import aliases.
+
+        e.g. if `import subprocess as sp`, then `sp.run` → 'subprocess.run'
+        """
         parts = []
         current = node
         while isinstance(current, ast.Attribute):
             parts.append(current.attr)
             current = current.value
         if isinstance(current, ast.Name):
-            parts.append(current.id)
+            # Resolve alias: sp → subprocess
+            real_name = self._import_aliases.get(current.id, current.id)
+            parts.append(real_name)
         return ".".join(reversed(parts))

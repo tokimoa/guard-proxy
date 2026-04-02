@@ -82,6 +82,7 @@ logs/
 # ----- Claude Code (AI assistant working files) -----
 .claude/
 CLAUDE.md
+Agent.md
 
 # ----- Temporary files -----
 tmp/

@@ -26,20 +26,20 @@ CREDENTIAL_ACCESS_PATTERNS: list[MaliciousPattern] = [
     ),
     MaliciousPattern(
         name="ssh_key_access",
-        pattern=re.compile(r"""(?:open|read).*['"~/].*\.ssh""", re.IGNORECASE),
+        pattern=re.compile(r"""(?:open|read).{0,500}['"~/].{0,500}\.ssh""", re.IGNORECASE),
         severity="critical",
         description="SSH key file access",
     ),
     MaliciousPattern(
         name="aws_credential_access",
-        pattern=re.compile(r"""(?:open|read).*['"~/].*\.aws""", re.IGNORECASE),
+        pattern=re.compile(r"""(?:open|read).{0,500}['"~/].{0,500}\.aws""", re.IGNORECASE),
         severity="critical",
         description="AWS credential file access",
     ),
     MaliciousPattern(
         name="credential_file_access",
         pattern=re.compile(
-            r"""(?:open|read).*['"].*(?:\.gnupg|\.npmrc|\.docker|\.kube|\.config/gcloud)""",
+            r"""(?:open|read).{0,500}['"].{0,500}(?:\.gnupg|\.npmrc|\.docker|\.kube|\.config/gcloud)""",
             re.IGNORECASE,
         ),
         severity="high",
@@ -68,7 +68,7 @@ NETWORK_EXFIL_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="data_exfil_urllib",
         pattern=re.compile(
-            r"(?:urllib|requests|httpx).*(?:os\.environ|open\(|subprocess)",
+            r"(?:urllib|requests|httpx).{0,500}(?:os\.environ|open\(|subprocess)",
             re.IGNORECASE | re.DOTALL,
         ),
         severity="critical",
@@ -76,7 +76,7 @@ NETWORK_EXFIL_PATTERNS: list[MaliciousPattern] = [
     ),
     MaliciousPattern(
         name="dns_exfil",
-        pattern=re.compile(r"socket\.getaddrinfo|dns\.resolver.*os\.environ", re.IGNORECASE),
+        pattern=re.compile(r"socket\.getaddrinfo|dns\.resolver.{0,500}os\.environ", re.IGNORECASE),
         severity="high",
         description="Potential DNS exfiltration",
     ),
@@ -88,7 +88,7 @@ OBFUSCATION_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="base64_exec",
         pattern=re.compile(
-            r"""(?:b64decode|base64\.b64decode).*(?:exec|eval|compile)|(?:exec|eval|compile).*(?:b64decode|base64\.b64decode)""",
+            r"""(?:b64decode|base64\.b64decode).{0,500}(?:exec|eval|compile)|(?:exec|eval|compile).{0,500}(?:b64decode|base64\.b64decode)""",
             re.IGNORECASE | re.DOTALL,
         ),
         severity="critical",
@@ -102,7 +102,7 @@ OBFUSCATION_PATTERNS: list[MaliciousPattern] = [
     ),
     MaliciousPattern(
         name="compile_exec",
-        pattern=re.compile(r"""compile\s*\(.*exec""", re.DOTALL),
+        pattern=re.compile(r"""compile\s*\(.{0,500}exec""", re.DOTALL),
         severity="high",
         description="compile() followed by exec()",
     ),
@@ -138,7 +138,7 @@ PERSISTENCE_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="subprocess_suspicious",
         pattern=re.compile(
-            r"""subprocess\.(?:run|Popen|call)\s*\(.*(?:curl|wget|nc\b|bash|sh\b|powershell)""",
+            r"""subprocess\.(?:run|Popen|call)\s*\(.{0,500}(?:curl|wget|nc\b|bash|sh\b|powershell)""",
             re.IGNORECASE | re.DOTALL,
         ),
         severity="high",
@@ -151,7 +151,7 @@ PERSISTENCE_PATTERNS: list[MaliciousPattern] = [
 SETUP_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="cmdclass_override",
-        pattern=re.compile(r"""cmdclass\s*=.*(?:install|develop|egg_info)""", re.IGNORECASE),
+        pattern=re.compile(r"""cmdclass\s*=.{0,500}(?:install|develop|egg_info)""", re.IGNORECASE),
         severity="medium",
         description="setup.py cmdclass override (install hook)",
     ),
@@ -169,7 +169,7 @@ ADVANCED_THREAT_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="reverse_shell",
         pattern=re.compile(
-            r"socket\.(?:socket|create_connection).*(?:connect|send).*(?:subprocess|os\.dup2)",
+            r"socket\.(?:socket|create_connection).{0,500}(?:connect|send).{0,500}(?:subprocess|os\.dup2)",
             re.IGNORECASE | re.DOTALL,
         ),
         severity="critical",
@@ -255,19 +255,19 @@ ADVANCED_THREAT_PATTERNS: list[MaliciousPattern] = [
     ),
     MaliciousPattern(
         name="unicode_escape_exec",
-        pattern=re.compile(r"exec\s*\(.*\\u[0-9a-fA-F]{4}", re.IGNORECASE),
+        pattern=re.compile(r"exec\s*\(.{0,500}\\u[0-9a-fA-F]{4}", re.IGNORECASE),
         severity="high",
         description="Unicode escape sequence in exec/eval (obfuscation)",
     ),
     MaliciousPattern(
         name="image_code_extraction",
-        pattern=re.compile(r"(?:Image\.open|getdata|getpixel).*(?:exec|eval|chr)", re.IGNORECASE | re.DOTALL),
+        pattern=re.compile(r"(?:Image\.open|getdata|getpixel).{0,500}(?:exec|eval|chr)", re.IGNORECASE | re.DOTALL),
         severity="critical",
         description="Code extraction from image data (steganography)",
     ),
     MaliciousPattern(
         name="system_binary_write",
-        pattern=re.compile(r"(?:open|write).*(?:/usr/local/bin|/usr/bin|/bin/)", re.IGNORECASE),
+        pattern=re.compile(r"(?:open|write).{0,500}(?:/usr/local/bin|/usr/bin|/bin/)", re.IGNORECASE),
         severity="critical",
         description="System binary path write (PATH hijack)",
     ),
@@ -279,13 +279,15 @@ ADVANCED_THREAT_PATTERNS: list[MaliciousPattern] = [
     ),
     MaliciousPattern(
         name="git_hook_write",
-        pattern=re.compile(r"(?:open|write).*\.git/hooks", re.IGNORECASE),
+        pattern=re.compile(r"(?:open|write).{0,500}\.git/hooks", re.IGNORECASE),
         severity="critical",
         description="Git hook injection (persistence)",
     ),
     MaliciousPattern(
         name="getattr_exec",
-        pattern=re.compile(r"getattr\s*\(\s*__builtins__.*(?:exec|eval|compile|system)", re.IGNORECASE | re.DOTALL),
+        pattern=re.compile(
+            r"getattr\s*\(\s*__builtins__.{0,500}(?:exec|eval|compile|system)", re.IGNORECASE | re.DOTALL
+        ),
         severity="critical",
         description="getattr(__builtins__) code execution bypass",
     ),
@@ -318,13 +320,13 @@ ADVANCED_THREAT_PATTERNS: list[MaliciousPattern] = [
     ),
     MaliciousPattern(
         name="private_key_access",
-        pattern=re.compile(r"""(?:open|read).*\.(?:pem|key|p12|pfx)""", re.IGNORECASE),
+        pattern=re.compile(r"""(?:open|read).{0,500}\.(?:pem|key|p12|pfx)""", re.IGNORECASE),
         severity="high",
         description="Private key/certificate file access",
     ),
     MaliciousPattern(
         name="env_reflection",
-        pattern=re.compile(r"os\.environ\[.*os\.environ|os\.environ\.get\(.*\+", re.IGNORECASE),
+        pattern=re.compile(r"os\.environ\[.{0,500}os\.environ|os\.environ\.get\(.{0,500}\+", re.IGNORECASE),
         severity="high",
         description="Environment variable reflection/computed access",
     ),

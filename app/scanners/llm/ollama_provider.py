@@ -18,6 +18,7 @@ class OllamaProvider:
         self._model = settings.ollama_model
         self._timeout = settings.ollama_timeout_seconds
         self._enabled = settings.ollama_enabled
+        self._client = httpx.AsyncClient(timeout=self._timeout)
 
     @property
     def provider_name(self) -> str:
@@ -27,8 +28,8 @@ class OllamaProvider:
         if not self._enabled:
             return False
         try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.get(f"{self._base_url}/api/tags")
+            async with httpx.AsyncClient(timeout=5.0) as check_client:
+                resp = await check_client.get(f"{self._base_url}/api/tags")
                 if resp.status_code != 200:
                     return False
                 models = resp.json().get("models", [])
@@ -38,23 +39,22 @@ class OllamaProvider:
 
     async def judge(self, prompt: str) -> JudgeResult:
         start = time.monotonic()
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            payload = {
-                "model": self._model,
-                "messages": [{"role": "user", "content": prompt}],
-                "format": {"type": "json_object"},
-                "stream": False,
-            }
+        payload = {
+            "model": self._model,
+            "messages": [{"role": "user", "content": prompt}],
+            "format": {"type": "json_object"},
+            "stream": False,
+        }
 
-            try:
-                resp = await client.post(
-                    f"{self._base_url}/v1/chat/completions",
-                    json=payload,
-                )
-                resp.raise_for_status()
-            except httpx.HTTPError as e:
-                logger.error("Ollama request failed: {err}", err=str(e))
-                raise
+        try:
+            resp = await self._client.post(
+                f"{self._base_url}/v1/chat/completions",
+                json=payload,
+            )
+            resp.raise_for_status()
+        except httpx.HTTPError as e:
+            logger.error("Ollama request failed: {err}", err=str(e))
+            raise
 
         elapsed = int((time.monotonic() - start) * 1000)
         data = resp.json()

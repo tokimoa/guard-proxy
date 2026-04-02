@@ -174,20 +174,28 @@ class LLMJudgeScanner:
         raise RuntimeError("Local LLM (Ollama) unavailable")
 
     async def _run_consensus(self, prompt: str) -> JudgeResult:
-        """Run both local and cloud, require agreement."""
+        """Run both local and cloud in parallel, require agreement."""
+        import asyncio
+
         local_result = None
         cloud_result = None
 
-        if self._local and await self._local.is_available():
-            try:
-                local_result = await self._local.judge(prompt)
-            except Exception:
-                logger.warning("Local LLM failed during consensus")
+        async def _run_local() -> JudgeResult | None:
+            if self._local and await self._local.is_available():
+                try:
+                    return await self._local.judge(prompt)
+                except Exception:
+                    logger.warning("Local LLM failed during consensus")
+            return None
 
-        try:
-            cloud_result = await self._run_cloud_only(prompt)
-        except Exception:
-            logger.warning("Cloud LLM failed during consensus")
+        async def _run_cloud() -> JudgeResult | None:
+            try:
+                return await self._run_cloud_only(prompt)
+            except Exception:
+                logger.warning("Cloud LLM failed during consensus")
+            return None
+
+        local_result, cloud_result = await asyncio.gather(_run_local(), _run_cloud())
 
         # If only one succeeded, use it
         if local_result and not cloud_result:

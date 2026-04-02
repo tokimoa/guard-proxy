@@ -80,15 +80,25 @@ class AdvisorySyncService:
         logger.info("Advisory sync complete: {total} advisories", total=total)
 
     async def _sync_package(self, client: httpx.AsyncClient, ecosystem: str, package_name: str) -> int:
-        """Query OSV API for a specific package and upsert advisories."""
-        payload = {"package": {"ecosystem": ecosystem, "name": package_name}}
+        """Query OSV API for a specific package and upsert advisories (with pagination)."""
+        payload: dict = {"package": {"ecosystem": ecosystem, "name": package_name}}
 
-        resp = await client.post(_OSV_API, json=payload)
-        if resp.status_code != 200:
-            return 0
+        # Fetch all pages
+        vulns: list[dict] = []
+        while True:
+            resp = await client.post(_OSV_API, json=payload)
+            if resp.status_code != 200:
+                break
 
-        data = resp.json()
-        vulns = data.get("vulns", [])
+            data = resp.json()
+            vulns.extend(data.get("vulns", []))
+
+            # Handle pagination
+            next_token = data.get("next_page_token")
+            if next_token:
+                payload["page_token"] = next_token
+            else:
+                break
 
         count = 0
         async with self._db.session() as session:

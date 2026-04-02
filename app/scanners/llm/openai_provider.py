@@ -19,6 +19,7 @@ class OpenAIProvider:
         self._max_tokens = settings.llm_max_tokens
         # Support custom OpenAI-compatible endpoints (vLLM etc.)
         self._base_url = settings.custom_llm_base_url or None
+        self._client = None  # Lazy init
 
     @property
     def provider_name(self) -> str:
@@ -27,18 +28,21 @@ class OpenAIProvider:
     async def is_available(self) -> bool:
         return bool(self._api_key or self._base_url)
 
+    def _get_client(self):  # noqa: ANN202
+        if self._client is None:
+            import openai
+
+            client_kwargs = {"timeout": self._timeout}
+            if self._api_key:
+                client_kwargs["api_key"] = self._api_key
+            if self._base_url:
+                client_kwargs["base_url"] = self._base_url
+            self._client = openai.AsyncOpenAI(**client_kwargs)
+        return self._client
+
     async def judge(self, prompt: str) -> JudgeResult:
-        import openai
-
         start = time.monotonic()
-
-        client_kwargs = {"timeout": self._timeout}
-        if self._api_key:
-            client_kwargs["api_key"] = self._api_key
-        if self._base_url:
-            client_kwargs["base_url"] = self._base_url
-
-        client = openai.AsyncOpenAI(**client_kwargs)
+        client = self._get_client()
 
         try:
             response = await client.chat.completions.create(

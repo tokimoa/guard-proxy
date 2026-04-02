@@ -16,6 +16,7 @@ class AnthropicProvider:
         self._model = settings.anthropic_model
         self._timeout = settings.anthropic_timeout_seconds
         self._max_tokens = settings.llm_max_tokens
+        self._client = None  # Lazy init to avoid import cost when not used
 
     @property
     def provider_name(self) -> str:
@@ -24,15 +25,19 @@ class AnthropicProvider:
     async def is_available(self) -> bool:
         return bool(self._api_key)
 
+    def _get_client(self):  # noqa: ANN202
+        if self._client is None:
+            import anthropic
+
+            self._client = anthropic.AsyncAnthropic(
+                api_key=self._api_key,
+                timeout=self._timeout,
+            )
+        return self._client
+
     async def judge(self, prompt: str) -> JudgeResult:
-        import anthropic
-
         start = time.monotonic()
-
-        client = anthropic.AsyncAnthropic(
-            api_key=self._api_key,
-            timeout=self._timeout,
-        )
+        client = self._get_client()
 
         tool_def = {
             "name": "report_scan_result",

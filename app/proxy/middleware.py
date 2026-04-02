@@ -1,26 +1,44 @@
-"""Request logging and timeout middleware."""
+"""Pure ASGI request logging middleware.
+
+Uses raw ASGI instead of BaseHTTPMiddleware to avoid buffering response bodies,
+which is critical for a proxy that streams tarballs.
+"""
 
 import time
 
 from loguru import logger
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.requests import Request
-from starlette.responses import Response
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 
-class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    """Log all incoming requests with timing."""
+class RequestLoggingMiddleware:
+    """Log all incoming requests with timing (pure ASGI, no body buffering)."""
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
         start = time.monotonic()
-        response = await call_next(request)
-        elapsed_ms = (time.monotonic() - start) * 1000
+        status_code = 0
 
+        async def send_wrapper(message: dict) -> None:
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = message["status"]
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
+        elapsed_ms = (time.monotonic() - start) * 1000
+        method = scope.get("method", "?")
+        path = scope.get("path", "?")
         logger.info(
             "{method} {path} → {status} ({elapsed:.0f}ms)",
-            method=request.method,
-            path=request.url.path,
-            status=response.status_code,
+            method=method,
+            path=path,
+            status=status_code,
             elapsed=elapsed_ms,
         )
-        return response

@@ -63,6 +63,7 @@ dependencies = [
     "pyjsparser>=2.7.0",
     # YARA rule parsing (pure Python, no C dependency)
     "plyara>=2.1.0",
+    "alembic>=1.18.4",
 ]
 
 [project.urls]

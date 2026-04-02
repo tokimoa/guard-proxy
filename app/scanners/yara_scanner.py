@@ -71,6 +71,7 @@ class YARAScanner:
             var_name = s.get("name", "")
             value = s.get("value", "")
             modifiers = s.get("modifiers", [])
+            str_type = s.get("type", "text")
 
             if not value:
                 continue
@@ -80,12 +81,25 @@ class YARAScanner:
             if "nocase" in modifiers:
                 flags = re.IGNORECASE
 
-            # Escape for literal string matching
-            pattern = re.escape(value)
+            if str_type == "regex":
+                # YARA regex: strip surrounding /.../ and use as-is
+                pattern = value.strip("/")
+            elif str_type == "byte":
+                # YARA hex string: e.g. "6A 40 68 00" → raw byte regex
+                try:
+                    hex_bytes = bytes.fromhex(value.replace(" ", "").replace("{", "").replace("}", "").replace("?", ""))
+                    pattern = re.escape(hex_bytes.decode("latin-1"))
+                except (ValueError, UnicodeDecodeError):
+                    continue
+            else:
+                # Text string: escape for literal matching
+                pattern = re.escape(value)
+
             try:
                 compiled = re.compile(pattern, flags)
                 strings.append((var_name, compiled))
             except re.error:
+                logger.debug("Failed to compile YARA string {var}: {val}", var=var_name, val=value[:50])
                 continue
 
         if not strings:
@@ -169,20 +183,30 @@ class YARAScanner:
         # Evaluate condition
         condition = rule.condition.lower().strip()
 
+        # "all of them"
+        if "all of them" in condition:
+            if all(matched.values()):
+                return [k for k, v in matched.items() if v]
+            return []
+
+        # "any of them"
         if "any of them" in condition:
             if any(matched.values()):
                 return [k for k, v in matched.items() if v]
             return []
 
-        if condition.startswith(("1 of them", "2 of them", "3 of them")):
-            n = int(condition[0])
+        # "N of them" (any number)
+        import re as _re
+
+        n_of_them = _re.match(r"(\d+)\s+of\s+them", condition)
+        if n_of_them:
+            n = int(n_of_them.group(1))
             matched_count = sum(1 for v in matched.values() if v)
             if matched_count >= n:
                 return [k for k, v in matched.items() if v]
             return []
 
         # Complex condition with 'and' / 'or' — simplified evaluation
-        # Split by 'or' at top level, then check 'and' groups
         or_groups = condition.split(" or ")
         for group in or_groups:
             and_parts = group.strip().split(" and ")
@@ -190,27 +214,39 @@ class YARAScanner:
             group_matches = []
             for part in and_parts:
                 part = part.strip().strip("()")
-                # Check if it's a variable reference
                 var_match = False
-                for var_name in matched:
-                    if var_name.lstrip("$") in part or var_name in part:
-                        if matched[var_name]:
-                            var_match = True
-                            group_matches.append(var_name)
-                        break
+
                 # Check for "N of them" within group
-                if "of them" in part:
-                    n = 1
-                    try:
-                        n = int(part.split()[0])
-                    except (ValueError, IndexError):
-                        pass
+                n_match = _re.match(r"(\d+)\s+of\s+them", part.strip())
+                if n_match:
+                    n = int(n_match.group(1))
                     if sum(1 for v in matched.values() if v) >= n:
                         var_match = True
+                        group_matches.extend(k for k, v in matched.items() if v)
+                elif "any of them" in part:
+                    if any(matched.values()):
+                        var_match = True
+                        group_matches.extend(k for k, v in matched.items() if v)
+                elif "all of them" in part:
+                    if all(matched.values()):
+                        var_match = True
+                        group_matches.extend(k for k, v in matched.items() if v)
+                else:
+                    # Variable reference: match exact $name
+                    for var_name in matched:
+                        if var_name in part:
+                            if matched[var_name]:
+                                var_match = True
+                                group_matches.append(var_name)
+                            break
+
                 if not var_match:
                     all_match = False
                     break
             if all_match and group_matches:
                 return group_matches
 
+        # Fallback: if condition is not recognized, use "any of them"
+        if any(matched.values()):
+            return [k for k, v in matched.items() if v]
         return []
