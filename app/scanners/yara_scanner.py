@@ -85,10 +85,17 @@ class YARAScanner:
                 # YARA regex: strip surrounding /.../ and use as-is
                 pattern = value.strip("/")
             elif str_type == "byte":
-                # YARA hex string: e.g. "6A 40 68 00" → raw byte regex
+                # YARA hex string: e.g. "6A 40 ?? 00" → byte regex with wildcards
                 try:
-                    hex_bytes = bytes.fromhex(value.replace(" ", "").replace("{", "").replace("}", "").replace("?", ""))
-                    pattern = re.escape(hex_bytes.decode("latin-1"))
+                    hex_clean = value.replace("{", "").replace("}", "").strip()
+                    hex_parts = hex_clean.split()
+                    regex_parts = []
+                    for hb in hex_parts:
+                        if "?" in hb:
+                            regex_parts.append(".")  # Wildcard byte
+                        else:
+                            regex_parts.append(re.escape(bytes.fromhex(hb).decode("latin-1")))
+                    pattern = "".join(regex_parts)
                 except (ValueError, UnicodeDecodeError):
                     continue
             else:
@@ -232,9 +239,9 @@ class YARAScanner:
                         var_match = True
                         group_matches.extend(k for k, v in matched.items() if v)
                 else:
-                    # Variable reference: match exact $name
+                    # Variable reference: exact match only
                     for var_name in matched:
-                        if var_name in part:
+                        if var_name == part.strip() or var_name.lstrip("$") == part.strip().lstrip("$"):
                             if matched[var_name]:
                                 var_match = True
                                 group_matches.append(var_name)
@@ -246,7 +253,13 @@ class YARAScanner:
             if all_match and group_matches:
                 return group_matches
 
-        # Fallback: if condition is not recognized, use "any of them"
+        # Fallback: if condition contains unsupported keywords, conservatively skip
+        unsupported = {"filesize", "entrypoint", "for", "of", "at", "in"}
+        if any(tok in condition for tok in unsupported):
+            logger.debug("YARA rule has unsupported condition: {cond}", cond=condition[:80])
+            return []
+
+        # Simple fallback for plain variable conditions
         if any(matched.values()):
             return [k for k, v in matched.items() if v]
         return []

@@ -44,11 +44,14 @@ class RubyGemsStaticAnalysisScanner:
             except OSError:
                 continue
 
-            # False positive: legitimate native extension build
-            if self._is_likely_safe(content):
-                continue
+            # Track if file has false-positive indicators (reduces severity, does NOT skip)
+            has_safe_indicators = self._is_likely_safe(content)
 
             matches = self._scan_content(content, artifact_path.name)
+            if has_safe_indicators:
+                for m in matches:
+                    if m.severity == "critical":
+                        m.severity = "high"
             all_matches.extend(matches)
             ml_matches = self._scan_content_multiline(content, artifact_path.name)
             all_matches.extend(ml_matches)

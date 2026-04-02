@@ -25,18 +25,19 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode (connects to DB)."""
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-        # Use synchronous sqlite for Alembic (not async)
-    )
     url = config.get_main_option("sqlalchemy.url")
-    if url and url.startswith("sqlite+aiosqlite"):
-        # Alembic needs synchronous driver
+
+    # Alembic requires a synchronous driver
+    if url and "aiosqlite" in url:
         from sqlalchemy import create_engine
 
-        connectable = create_engine(url.replace("sqlite+aiosqlite", "sqlite"))
+        connectable = create_engine(url.replace("sqlite+aiosqlite", "sqlite"), poolclass=pool.NullPool)
+    else:
+        connectable = engine_from_config(
+            config.get_section(config.config_ini_section, {}),
+            prefix="sqlalchemy.",
+            poolclass=pool.NullPool,
+        )
 
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)

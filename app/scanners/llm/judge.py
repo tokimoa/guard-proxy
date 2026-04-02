@@ -242,4 +242,10 @@ class LLMJudgeScanner:
                 suspicious_lines=cautious.suspicious_lines,
                 provider_name=f"consensus({local_result.provider_name}+{cloud_result.provider_name})",
                 latency_ms=local_result.latency_ms + cloud_result.latency_ms,
+                token_usage={
+                    "prompt_tokens": local_result.token_usage.get("prompt_tokens", 0)
+                    + cloud_result.token_usage.get("prompt_tokens", 0),
+                    "completion_tokens": local_result.token_usage.get("completion_tokens", 0)
+                    + cloud_result.token_usage.get("completion_tokens", 0),
+                },
             )

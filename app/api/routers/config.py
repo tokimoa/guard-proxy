@@ -12,9 +12,10 @@ async def show_config(request: Request) -> dict:
     config = settings.model_dump()
 
     # Redact sensitive values
-    for key in ("anthropic_api_key", "openai_api_key", "custom_llm_api_key"):
+    secret_keys = ("anthropic_api_key", "openai_api_key", "custom_llm_api_key", "slack_webhook_url")
+    for key in secret_keys:
         val = config.get(key, "")
         if val:
-            config[key] = val[:8] + "..." if len(val) > 8 else "***"
+            config[key] = val[:4] + "****"
 
     return config

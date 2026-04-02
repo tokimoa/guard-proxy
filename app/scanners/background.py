@@ -101,8 +101,9 @@ class BackgroundScanManager:
 
     async def shutdown(self) -> None:
         """Cancel all pending background tasks."""
+        pending = len(self._tasks)
         for task in self._tasks:
             task.cancel()
         if self._tasks:
             await asyncio.gather(*self._tasks, return_exceptions=True)
-        logger.info("Background scan manager shut down ({n} tasks)", n=len(self._tasks))
+        logger.info("Background scan manager shut down ({n} tasks)", n=pending)

@@ -79,4 +79,6 @@ class DepsDevClient:
 
 def _encode(s: str) -> str:
     """URL-encode package names (e.g., @scope/pkg)."""
-    return s.replace("/", "%2F")
+    from urllib.parse import quote
+
+    return quote(s, safe="")

@@ -50,6 +50,11 @@ class RubyGemsRegistryClient:
 
     async def download_gem(self, gem_filename: str) -> bytes:
         """Download .gem file from upstream."""
+        # Validate gem filename to prevent path traversal / SSRF
+        if "://" in gem_filename or ".." in gem_filename or "/" in gem_filename:
+            raise UpstreamRegistryError(
+                url=gem_filename, detail="Invalid gem filename"
+            )
         url = f"{self._upstream_url}/gems/{gem_filename}"
         try:
             response = await self._client.get(url)
@@ -65,10 +70,12 @@ class RubyGemsRegistryClient:
 
     async def forward_request(self, path: str, headers: dict[str, str] | None = None) -> httpx.Response:
         """Forward an arbitrary request to upstream (for pass-through routes)."""
+        if "://" in path:
+            raise UpstreamRegistryError(url=path, detail="Absolute URLs not allowed in forward_request")
         url = f"{self._upstream_url}{path}"
         clean_headers = {}
         if headers:
-            skip = {"host", "connection", "transfer-encoding", "content-length"}
+            skip = {"host", "connection", "transfer-encoding", "content-length", "authorization", "cookie"}
             clean_headers = {k: v for k, v in headers.items() if k.lower() not in skip}
 
         try:

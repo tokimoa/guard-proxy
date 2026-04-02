@@ -127,13 +127,15 @@ class NpmRegistryClient:
         from urllib.parse import urlparse
 
         if not url.startswith(("http://", "https://")):
+            if "://" in url:
+                raise UpstreamRegistryError(url=url, detail=f"Unsupported URL scheme: {url[:20]}")
             return  # Relative URL — safe, httpx will resolve against base_url
         parsed = urlparse(url)
         upstream_parsed = urlparse(self._upstream_url)
-        if parsed.hostname != upstream_parsed.hostname:
+        if parsed.netloc != upstream_parsed.netloc:
             raise UpstreamRegistryError(
                 url=url,
-                detail=f"URL host {parsed.hostname} does not match upstream {upstream_parsed.hostname}",
+                detail=f"URL netloc {parsed.netloc} does not match upstream {upstream_parsed.netloc}",
             )
 
     async def close(self) -> None:

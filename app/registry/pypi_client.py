@@ -83,6 +83,8 @@ class PyPIRegistryClient:
         from urllib.parse import urlparse
 
         parsed = urlparse(url)
+        if parsed.scheme and parsed.scheme not in ("http", "https"):
+            raise UpstreamRegistryError(url=url, detail=f"Unsupported scheme: {parsed.scheme}")
         upstream_host = urlparse(self._upstream_url).hostname
         allowed = self._ALLOWED_PYPI_HOSTS | ({upstream_host} if upstream_host else set())
         if parsed.hostname and parsed.hostname not in allowed:

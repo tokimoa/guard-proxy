@@ -110,12 +110,12 @@ class TestConfigRouter:
         resp = client.get("/config")
         assert resp.status_code == 200
         data = resp.json()
-        # API key should be redacted
-        assert data["anthropic_api_key"] == "sk-ant-a..."
+        # API key should be redacted (first 4 chars + ****)
+        assert data["anthropic_api_key"] == "sk-a****"
         # Empty key stays empty
         assert data["openai_api_key"] == ""
         # Custom key should be redacted
-        assert data["custom_llm_api_key"] == "custom-k..."
+        assert data["custom_llm_api_key"] == "cust****"
         # Non-sensitive values preserved
         assert data["app_name"] == "Guard Proxy"
 
