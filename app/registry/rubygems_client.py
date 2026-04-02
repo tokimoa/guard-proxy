@@ -52,9 +52,7 @@ class RubyGemsRegistryClient:
         """Download .gem file from upstream."""
         # Validate gem filename to prevent path traversal / SSRF
         if "://" in gem_filename or ".." in gem_filename or "/" in gem_filename:
-            raise UpstreamRegistryError(
-                url=gem_filename, detail="Invalid gem filename"
-            )
+            raise UpstreamRegistryError(url=gem_filename, detail="Invalid gem filename")
         url = f"{self._upstream_url}/gems/{gem_filename}"
         try:
             response = await self._client.get(url)
