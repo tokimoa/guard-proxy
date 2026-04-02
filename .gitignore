@@ -77,10 +77,11 @@ htmlcov/
 logs/
 
 # ----- uv -----
-uv.lock
+# uv.lock is committed for reproducible CI builds
 
 # ----- Claude Code (AI assistant working files) -----
 .claude/
+CLAUDE.md
 
 # ----- Temporary files -----
 tmp/
