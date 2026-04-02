@@ -84,6 +84,9 @@ logs/
 CLAUDE.md
 Agent.md
 
+# ----- Internal roadmap (not published) -----
+roadmap/
+
 # ----- Temporary files -----
 tmp/
 temp/
