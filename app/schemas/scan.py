@@ -18,6 +18,6 @@ class ScanResult(BaseModel):
 class ScanRequest(BaseModel):
     """Request to scan a package."""
 
-    package_name: str
-    version: str
+    package_name: str = Field(min_length=1, max_length=256)
+    version: str = Field(min_length=1, max_length=128)
     registry: Literal["npm", "pypi", "rubygems"] = "npm"
