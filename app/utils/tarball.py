@@ -387,6 +387,73 @@ def _extract_gem_data(data_bytes: bytes, tmp_dir: Path) -> list[Path]:
     return extracted
 
 
+# -- Cargo .crate extraction --
+
+_CARGO_TARGET_EXTENSIONS = {".rs"}
+_CARGO_TARGET_FILES = {"build.rs", "Cargo.toml"}
+
+
+def _is_cargo_target(name: str) -> bool:
+    """Check if a file is relevant for Cargo security scanning."""
+    basename = Path(name).name
+    if basename in _CARGO_TARGET_FILES:
+        return True
+    return Path(name).suffix in _CARGO_TARGET_EXTENSIONS
+
+
+def extract_cargo_crate(content: bytes) -> tuple[list[Path], Path]:
+    """Extract security-relevant files from a .crate archive (tar.gz).
+
+    .crate files have structure: crate-name-version/src/main.rs etc.
+    Returns:
+        Tuple of (list of extracted file paths, temp directory path).
+    """
+    tmp_dir = Path(tempfile.mkdtemp(prefix="guard-proxy-cargo-"))
+    extracted: list[Path] = []
+    total_bytes = 0
+
+    try:
+        with tarfile.open(fileobj=io.BytesIO(content), mode="r:gz") as tar:
+            for member in tar:
+                if not member.isfile() or member.size > _MAX_FILE_SIZE:
+                    continue
+
+                # Strip top-level crate-version/ directory
+                parts = Path(member.name).parts
+                if len(parts) < 2:
+                    relative = member.name
+                else:
+                    relative = str(Path(*parts[1:]))
+
+                if ".." in relative:
+                    continue
+
+                if not _is_cargo_target(member.name) and not _is_cargo_target(relative):
+                    continue
+
+                if len(extracted) >= _MAX_FILE_COUNT:
+                    logger.warning("File count limit reached during crate extraction")
+                    break
+                total_bytes += member.size
+                if total_bytes > _MAX_TOTAL_SIZE:
+                    logger.warning("Total size limit reached during crate extraction")
+                    break
+
+                target = tmp_dir / relative
+                if not _is_safe_path(tmp_dir, target):
+                    continue
+                target.parent.mkdir(parents=True, exist_ok=True)
+                with tar.extractfile(member) as src:
+                    if src:
+                        target.write_bytes(src.read())
+                        extracted.append(target)
+
+    except tarfile.TarError as e:
+        raise TarballExtractionError(str(e)) from e
+
+    return extracted, tmp_dir
+
+
 # -- Go module zip extraction --
 
 _GO_TARGET_EXTENSIONS = {".go", ".c", ".h", ".s"}

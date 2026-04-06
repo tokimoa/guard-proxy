@@ -33,11 +33,13 @@ from app.db.cache_service import CacheService
 from app.db.session import Database
 from app.decision.engine import DecisionEngine
 from app.notifications import NotificationService
+from app.proxy.cargo import CargoProxy
 from app.proxy.go import GoProxy
 from app.proxy.middleware import RequestLoggingMiddleware
 from app.proxy.npm import NpmProxy
 from app.proxy.pypi import PyPIProxy
 from app.proxy.rubygems import RubyGemsProxy
+from app.registry.cargo_client import CargoRegistryClient
 from app.registry.depsdev_client import DepsDevClient
 from app.registry.go_client import GoRegistryClient
 from app.registry.npm_client import NpmRegistryClient
@@ -54,6 +56,7 @@ from app.scanners.ioc_checker import IOCScanner
 from app.scanners.maintainer_scanner import MaintainerScanner
 from app.scanners.metadata_scanner import MetadataScanner
 from app.scanners.static_analysis import StaticAnalysisScanner
+from app.scanners.static_analysis_cargo import CargoStaticAnalysisScanner
 from app.scanners.static_analysis_go import GoStaticAnalysisScanner
 from app.scanners.static_analysis_pypi import PyPIStaticAnalysisScanner
 from app.scanners.static_analysis_rubygems import RubyGemsStaticAnalysisScanner
@@ -219,6 +222,22 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         notification_service,
     )
 
+    # --- Cargo proxy (tiered pipeline) ---
+    cargo_registry = CargoRegistryClient(settings)
+    cargo_fast = _build_fast_scanners(CargoStaticAnalysisScanner(settings))
+    cargo_slow = _build_slow_scanners()
+    cargo_pipeline = TieredScanPipeline(cargo_fast, cargo_slow)
+    cargo_proxy = CargoProxy(
+        settings,
+        cargo_registry,
+        cargo_pipeline,
+        decision_engine,
+        cache_service,
+        audit_service,
+        bg_manager,
+        notification_service,
+    )
+
     if llm_scanner:
         logger.info("LLM Judge enabled — tiered scanning active")
     fast_scanners_list = [
@@ -249,8 +268,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     app.include_router(pypi_proxy.get_router(), prefix="/pypi")
     app.include_router(rubygems_proxy.get_router(), prefix="/gems")
     app.include_router(go_proxy.get_router(), prefix="/go")
+    app.include_router(cargo_proxy.get_router(), prefix="/cargo")
 
     # Backward-compatible non-prefixed routes (legacy multi-port mode)
+    app.include_router(cargo_proxy.get_router())
     app.include_router(go_proxy.get_router())
     app.include_router(rubygems_proxy.get_router())
     app.include_router(pypi_proxy.get_router())
@@ -262,7 +283,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     app.state.settings = settings
     app.state.bg_manager = bg_manager
 
-    logger.info("Guard Proxy ready — listening for npm, PyPI, RubyGems, and Go requests")
+    logger.info("Guard Proxy ready — listening for npm, PyPI, RubyGems, Go, and Cargo requests")
     yield
 
     # Shutdown
@@ -275,6 +296,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     await pypi_registry.close()
     await rubygems_registry.close()
     await go_registry.close()
+    await cargo_registry.close()
     await database.close()
     logger.info("Guard Proxy shut down")
 

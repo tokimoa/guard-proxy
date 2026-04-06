@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     rubygems_upstream_url: str = "https://rubygems.org"
     go_proxy_port: int = 4876
     go_upstream_url: str = "https://proxy.golang.org"
+    cargo_proxy_port: int = 4877
+    cargo_upstream_url: str = "https://crates.io"
     admin_api_port: int = 8100
 
     # Cooldown gate
