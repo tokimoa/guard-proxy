@@ -26,20 +26,20 @@ CREDENTIAL_ACCESS_PATTERNS: list[MaliciousPattern] = [
     ),
     MaliciousPattern(
         name="ssh_key_access",
-        pattern=re.compile(r"""(?:File\.read|Dir\.glob|IO\.read).{0,500}\.ssh""", re.IGNORECASE),
+        pattern=re.compile(r"""(?:File\.read|Dir\.glob|IO\.read).{0,200}\.ssh""", re.IGNORECASE),
         severity="critical",
         description="SSH key file access",
     ),
     MaliciousPattern(
         name="aws_credential_access",
-        pattern=re.compile(r"""(?:File\.read|Dir\.glob|IO\.read).{0,500}\.aws""", re.IGNORECASE),
+        pattern=re.compile(r"""(?:File\.read|Dir\.glob|IO\.read).{0,200}\.aws""", re.IGNORECASE),
         severity="critical",
         description="AWS credential file access",
     ),
     MaliciousPattern(
         name="credential_file_access",
         pattern=re.compile(
-            r"""(?:File\.read|Dir\.glob|IO\.read).{0,500}(?:\.gnupg|\.docker|\.kube|\.config/gcloud)""",
+            r"""(?:File\.read|Dir\.glob|IO\.read).{0,200}(?:\.gnupg|\.docker|\.kube|\.config/gcloud)""",
             re.IGNORECASE,
         ),
         severity="high",
@@ -47,7 +47,7 @@ CREDENTIAL_ACCESS_PATTERNS: list[MaliciousPattern] = [
     ),
     MaliciousPattern(
         name="home_dir_traversal",
-        pattern=re.compile(r"Dir\.home|ENV\[.HOME.\].{0,500}(?:Dir\.glob|File\.read|Dir\.entries)", re.IGNORECASE),
+        pattern=re.compile(r"Dir\.home|ENV\[.HOME.\].{0,200}(?:Dir\.glob|File\.read|Dir\.entries)", re.IGNORECASE),
         severity="high",
         description="Home directory traversal",
     ),
@@ -74,7 +74,7 @@ NETWORK_EXFIL_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="net_http_with_env",
         pattern=re.compile(
-            r"(?:Net::HTTP|URI\.open|open-uri|HTTParty|Faraday|RestClient).{0,500}ENV",
+            r"(?:Net::HTTP|URI\.open|open-uri|HTTParty|Faraday|RestClient).{0,200}ENV",
             re.IGNORECASE | re.DOTALL,
         ),
         severity="critical",
@@ -94,7 +94,7 @@ OBFUSCATION_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="base64_eval",
         pattern=re.compile(
-            r"(?:Base64\.decode64|Base64\.urlsafe_decode64).{0,500}eval|eval.{0,500}(?:Base64\.decode64|Base64\.urlsafe_decode64)",
+            r"(?:Base64\.decode64|Base64\.urlsafe_decode64).{0,200}eval|eval.{0,200}(?:Base64\.decode64|Base64\.urlsafe_decode64)",
             re.IGNORECASE | re.DOTALL,
         ),
         severity="critical",
@@ -121,7 +121,7 @@ OBFUSCATION_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="system_suspicious",
         pattern=re.compile(
-            r"""(?:system|exec|%x)\s*[\(\{].{0,500}(?:curl|wget|nc\b|bash|sh\b|powershell)""",
+            r"""(?:system|exec|%x)\s*[\(\{].{0,200}(?:curl|wget|nc\b|bash|sh\b|powershell)""",
             re.IGNORECASE | re.DOTALL,
         ),
         severity="high",
@@ -159,7 +159,7 @@ PERSISTENCE_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="shell_profile_write",
         pattern=re.compile(
-            r"""File\.(?:write|open|append).{0,500}(?:\.bashrc|\.zshrc|\.profile|\.bash_profile)""",
+            r"""File\.(?:write|open|append).{0,200}(?:\.bashrc|\.zshrc|\.profile|\.bash_profile)""",
             re.IGNORECASE,
         ),
         severity="high",
@@ -173,7 +173,7 @@ ADVANCED_THREAT_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="reverse_shell",
         pattern=re.compile(
-            r"TCPSocket\.(?:new|open).{0,500}(?:exec|system|spawn|\$stdin\.reopen)",
+            r"TCPSocket\.(?:new|open).{0,200}(?:exec|system|spawn|\$stdin\.reopen)",
             re.IGNORECASE | re.DOTALL,
         ),
         severity="critical",
@@ -223,13 +223,13 @@ ADVANCED_THREAT_PATTERNS: list[MaliciousPattern] = [
     ),
     MaliciousPattern(
         name="yaml_unsafe_load",
-        pattern=re.compile(r"YAML\.load\s*\((?!.{0,500}safe)", re.IGNORECASE),
+        pattern=re.compile(r"YAML\.load\s*\((?!.{0,200}safe)", re.IGNORECASE),
         severity="high",
         description="Unsafe YAML load (potential RCE)",
     ),
     MaliciousPattern(
         name="erb_eval",
-        pattern=re.compile(r"ERB\.new\s*\(.{0,500}\)\.result", re.IGNORECASE | re.DOTALL),
+        pattern=re.compile(r"ERB\.new\s*\(.{0,200}\)\.result", re.IGNORECASE | re.DOTALL),
         severity="high",
         description="ERB template evaluation (potential code injection)",
     ),
@@ -248,14 +248,14 @@ ADVANCED_THREAT_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="system_binary_write",
         pattern=re.compile(
-            r"(?:File\.write|File\.open|IO\.write).{0,500}(?:/usr/local/bin|/usr/bin|/bin/)", re.IGNORECASE
+            r"(?:File\.write|File\.open|IO\.write).{0,200}(?:/usr/local/bin|/usr/bin|/bin/)", re.IGNORECASE
         ),
         severity="critical",
         description="System binary path write (PATH hijack)",
     ),
     MaliciousPattern(
         name="git_hook_write",
-        pattern=re.compile(r"(?:File\.write|File\.open|IO\.write).{0,500}\.git/hooks", re.IGNORECASE),
+        pattern=re.compile(r"(?:File\.write|File\.open|IO\.write).{0,200}\.git/hooks", re.IGNORECASE),
         severity="critical",
         description="Git hook injection (persistence)",
     ),
@@ -288,13 +288,13 @@ ADVANCED_THREAT_PATTERNS: list[MaliciousPattern] = [
     ),
     MaliciousPattern(
         name="private_key_access",
-        pattern=re.compile(r"""(?:File\.read|IO\.read).{0,500}\.(?:pem|key|p12|pfx)""", re.IGNORECASE),
+        pattern=re.compile(r"""(?:File\.read|IO\.read).{0,200}\.(?:pem|key|p12|pfx)""", re.IGNORECASE),
         severity="high",
         description="Private key/certificate file access",
     ),
     MaliciousPattern(
         name="env_reflection",
-        pattern=re.compile(r"ENV\[.{0,500}ENV\[|ENV\.fetch\(.{0,500}\+", re.IGNORECASE),
+        pattern=re.compile(r"ENV\[.{0,200}ENV\[|ENV\.fetch\(.{0,200}\+", re.IGNORECASE),
         severity="high",
         description="Environment variable reflection/computed access",
     ),

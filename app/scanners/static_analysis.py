@@ -147,9 +147,7 @@ class StaticAnalysisScanner:
             return "fail", min(1.0, 0.7 + len(matches) * 0.05)
 
         if max_severity >= _SEVERITY_ORDER["high"]:
-            if len(matches) >= 2:
-                return "fail", min(0.9, 0.6 + len(matches) * 0.05)
-            return "warn", 0.7
+            return "fail", min(0.9, 0.6 + len(matches) * 0.05)
 
         if max_severity >= _SEVERITY_ORDER["medium"]:
             if len(matches) >= 3:

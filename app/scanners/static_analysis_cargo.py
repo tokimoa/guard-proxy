@@ -61,8 +61,39 @@ class CargoStaticAnalysisScanner:
             matches = self._scan_content(content, artifact_path.name, is_build_rs)
 
             if has_safe_indicators:
+                _NEVER_DOWNGRADE = {
+                    "reverse_shell",
+                    "crypto_miner",
+                    "cloud_metadata",
+                    "cloud_metadata_access",
+                    "cloud_metadata_expanded",
+                    "ssh_key_access",
+                    "aws_credential_access",
+                    "destructive_command",
+                    "procfs_access",
+                    "k8s_secret_access",
+                    "system_binary_write",
+                    "git_hook_write",
+                    "dll_hijacking",
+                    "known_c2_domain",
+                    "known_c2_ip",
+                    "crontab_write",
+                    "systemd_write",
+                    "launchd_write",
+                    "sitecustomize_write",
+                    "ld_preload_inject",
+                    "base64_exec",
+                    "base64_eval",
+                    "getattr_exec",
+                    "libc_system",
+                    "crontab_persistence",
+                    "webhook_exfiltration",
+                    "etc_passwd",
+                    "base64_decode_exec",
+                    "build_rs_shell",
+                }
                 for m in matches:
-                    if m.severity == "critical":
+                    if m.severity == "critical" and m.pattern_name not in _NEVER_DOWNGRADE:
                         m.severity = "high"
 
             all_matches.extend(matches)
@@ -151,9 +182,7 @@ class CargoStaticAnalysisScanner:
         if max_severity >= _SEVERITY_ORDER["critical"]:
             return "fail", min(1.0, 0.7 + len(matches) * 0.05)
         if max_severity >= _SEVERITY_ORDER["high"]:
-            if len(matches) >= 2:
-                return "fail", min(0.9, 0.6 + len(matches) * 0.05)
-            return "warn", 0.7
+            return "fail", min(0.9, 0.6 + len(matches) * 0.05)
         if max_severity >= _SEVERITY_ORDER["medium"]:
             if len(matches) >= 3:
                 return "warn", 0.7
