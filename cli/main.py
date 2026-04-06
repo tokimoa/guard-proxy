@@ -31,7 +31,8 @@ def start(
     console.print(f"[bold green]Guard Proxy v{VERSION}[/bold green]")
     console.print(f"  Mode: {settings.decision_mode}")
     console.print(f"  Listening: {host}:{bind_port}")
-    console.print(f"  Upstream: {settings.npm_upstream_url}")
+    console.print("  Single-port routes: /npm, /pypi, /gems, /go")
+    console.print(f"  Dashboard: http://{host}:{bind_port}/dashboard")
 
     uvicorn.run(
         "app.main:create_app",

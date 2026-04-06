@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-04-07
+
+### Added
+
+- **Multi-registry single port** — all registries accessible via path prefixes on a single port:
+  - `/npm/` → npm proxy
+  - `/pypi/` → PyPI proxy (Simple API)
+  - `/gems/` → RubyGems proxy
+  - `/go/` → Go module proxy
+- Backward-compatible: non-prefixed legacy routes still work
+- CLI now shows single-port routes and dashboard URL at startup
+
 ## [2.0.0] - 2026-04-07
 
 Major release: 4th registry (Go modules), Dashboard UI, DevContainer.
@@ -166,6 +178,7 @@ Security hardening and feature improvements from code review.
 | Real-world incidents 2024–2026 (23 CVEs) | 23/23 | 100% |
 | False positives (100 popular packages) | 0 | 0% |
 
+[2.1.0]: https://github.com/tokimoa/guard-proxy/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/tokimoa/guard-proxy/compare/v1.2.0...v2.0.0
 [1.2.0]: https://github.com/tokimoa/guard-proxy/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/tokimoa/guard-proxy/compare/v1.0.0...v1.1.0

@@ -243,6 +243,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     app.include_router(cache_router)
     app.include_router(config_router)
     app.include_router(audit_router)
+
+    # Path-prefixed routes for single-port multi-registry mode
+    app.include_router(npm_proxy.get_router(), prefix="/npm")
+    app.include_router(pypi_proxy.get_router(), prefix="/pypi")
+    app.include_router(rubygems_proxy.get_router(), prefix="/gems")
+    app.include_router(go_proxy.get_router(), prefix="/go")
+
+    # Backward-compatible non-prefixed routes (legacy multi-port mode)
     app.include_router(go_proxy.get_router())
     app.include_router(rubygems_proxy.get_router())
     app.include_router(pypi_proxy.get_router())
