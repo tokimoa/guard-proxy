@@ -113,6 +113,9 @@ select = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "network: tests that require network access (DataDog, OSSF, osv.dev APIs)",
+]
 
 [tool.coverage.run]
 source = ["app", "cli"]

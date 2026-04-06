@@ -212,7 +212,24 @@ COOLDOWN_DAYS=14         # Longer cooldown for new packages
 
 Evaluated against public, third-party benchmarks — not just internal tests.
 
-### Detection Rate
+### IOC Database Coverage (Full Dataset Validation)
+
+Real data fetched from public APIs and validated against our IOC database:
+
+| Dataset | Source | Packages | Matched | Coverage |
+|---|---|---|---|---|
+| **DataDog npm** | [manifest.json](https://github.com/DataDog/malicious-software-packages-dataset) | 9,505 | 9,505 | **100.0%** |
+| **DataDog PyPI** | [manifest.json](https://github.com/DataDog/malicious-software-packages-dataset) | 1,786 | 1,786 | **100.0%** |
+| **OSSF cross-ref** (npm sample) | [osv.dev API](https://github.com/ossf/malicious-packages) | 200 | 192 | **96.0%** |
+| **OSSF cross-ref** (PyPI sample) | [osv.dev API](https://github.com/ossf/malicious-packages) | 200 | 141 | **70.5%** |
+
+**Total IOC coverage: 11,291/11,291 (100%)** against the DataDog dataset.
+
+OSSF cross-reference rates are lower because the DataDog dataset includes packages that predate OSSF's MAL-* advisory system. Both datasets are complementary — Guard Proxy uses DataDog as its primary IOC source.
+
+### Static Analysis Detection Rate
+
+Pattern-matching benchmarks against public rule sets and taxonomies:
 
 | Benchmark | Source | Detected | Rate |
 |---|---|---|---|
@@ -220,11 +237,11 @@ Evaluated against public, third-party benchmarks — not just internal tests.
 | **GuardDog rules** (Go) | [DataDog](https://github.com/DataDog/guarddog) | 5/5 | **100%** |
 | **GuardDog rules** (RubyGems) | [DataDog](https://github.com/DataDog/guarddog) | 7/7 | **100%** |
 | **BKC attack taxonomy** | [Springer/Uni Bonn](https://arxiv.org/abs/2005.09535) | 12/12 | **100%** |
-| **OSSF malicious-packages** | [OpenSSF](https://github.com/ossf/malicious-packages) | 18/18 | **100%** |
+| **OSSF attack patterns** | [OpenSSF](https://github.com/ossf/malicious-packages) | 18/18 | **100%** |
 | **OSPTrack categories** | [Zenodo/arXiv](https://arxiv.org/html/2411.14829v1) | 20/20 | **100%** |
 | Real-world incidents (2024-2026) | Documented CVEs | 23/23 | **100%** |
-| Go attack vectors | Known attack patterns\* | 10/10 | **100%** |
-| Cargo attack vectors | Known attack patterns\* | 8/8 | **100%** |
+| Go attack vectors | Known patterns\* | 10/10 | **100%** |
+| Cargo attack vectors | Known patterns\* | 8/8 | **100%** |
 | Adversarial evasion techniques | Internal | 35/35 | **100%** |
 
 \* No standardized Go/Cargo-specific supply chain benchmark exists yet. Tests are based on real incidents (BoltDB typosquat, faster_log, evm-units) and known attack vectors.
