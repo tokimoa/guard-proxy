@@ -1,6 +1,6 @@
 [project]
 name = "guard-proxy"
-version = "1.1.0"
+version = "1.2.0"
 description = "Supply chain security proxy for npm, PyPI, and RubyGems — blocks malicious packages before they execute"
 readme = "README.md"
 license = "MIT"
@@ -116,3 +116,12 @@ asyncio_mode = "auto"
 
 [tool.coverage.run]
 source = ["app", "cli"]
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = [
+    "B101",  # assert is fine
+    "B105",  # false positive on verdict score dict
+    "B110",  # try/except/pass is intentional for best-effort decoding
+    "B112",  # try/except/continue is intentional for best-effort iteration
+]

@@ -137,7 +137,11 @@ class RubyGemsProxy:
                 gem_info = await self._registry.get_gem_metadata(gem_name)
                 scan_metadata = {"authors": gem_info.get("authors", "")}
             except Exception:
-                pass
+                logger.warning(
+                    "Could not fetch metadata for {gem}@{ver}, proceeding with scan",
+                    gem=gem_name,
+                    ver=version,
+                )
 
             package_info = PackageInfo(
                 name=gem_name,

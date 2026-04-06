@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-04-07
+
+### Added
+
+- **CI security scanning** — bandit static security analysis added to CI pipeline
+- **CI coverage threshold** — `--cov-fail-under=65` enforced in test job (prevents regression)
+
+### Changed
+
+- Proxy error handling unified — PyPI/RubyGems metadata fetch failures now log warnings consistently with npm (previously silent `pass`)
+
 ## [1.1.0] - 2026-04-07
 
 ### Added
@@ -114,6 +125,7 @@ Security hardening and feature improvements from code review.
 | Real-world incidents 2024–2026 (23 CVEs) | 23/23 | 100% |
 | False positives (100 popular packages) | 0 | 0% |
 
+[1.2.0]: https://github.com/tokimoa/guard-proxy/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/tokimoa/guard-proxy/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/tokimoa/guard-proxy/compare/v0.3.0...v1.0.0
 [0.3.0]: https://github.com/tokimoa/guard-proxy/compare/v0.2.0...v0.3.0
