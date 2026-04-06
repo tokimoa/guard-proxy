@@ -111,6 +111,8 @@ class Settings(BaseSettings):
     # YARA rules
     yara_enabled: bool = True
     yara_rules_path: str = ""
+    yara_rule_sources: list[str] = []
+    yara_auto_update: bool = False
 
     # SBOM
     sbom_enabled: bool = True

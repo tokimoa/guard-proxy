@@ -105,6 +105,23 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     depsdev_client = DepsDevClient(timeout=settings.depsdev_timeout)
     dependency_scanner = DependencyScanner(depsdev_client, settings) if settings.dependency_check_enabled else None
 
+    # Auto-update YARA rules from configured sources
+    if settings.yara_auto_update and settings.yara_rule_sources:
+        try:
+            from app.rules.manager import RuleManager
+
+            rule_mgr = RuleManager()
+            for source_url in settings.yara_rule_sources:
+                source_name = source_url.rstrip("/").split("/")[-1].removesuffix(".yar")
+                if not rule_mgr.index.get_source(source_name):
+                    rule_mgr.index.add_source(source_name, source_url)
+            results = await rule_mgr.update_all()
+            for r in results:
+                if r.get("status") == "updated":
+                    logger.info("YARA rules updated: {name} ({count} rules)", name=r["name"], count=r["rule_count"])
+        except Exception:
+            logger.warning("Failed to auto-update YARA rules")
+
     # Advisory sync (background)
     advisory_sync = None
     if settings.advisory_sync_enabled:
