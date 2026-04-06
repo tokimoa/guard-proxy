@@ -24,6 +24,8 @@ All settings are managed via environment variables or a `.env` file.
 | `PYPI_UPSTREAM_URL` | str | `https://pypi.org` | PyPI upstream registry URL |
 | `RUBYGEMS_PROXY_PORT` | int | `4875` | RubyGems proxy listening port |
 | `RUBYGEMS_UPSTREAM_URL` | str | `https://rubygems.org` | RubyGems upstream registry URL |
+| `GO_PROXY_PORT` | int | `4876` | Go module proxy listening port |
+| `GO_UPSTREAM_URL` | str | `https://proxy.golang.org` | Go module upstream proxy URL |
 | `ADMIN_API_PORT` | int | `8100` | Admin API listening port |
 
 ## Cooldown Gate Settings
@@ -253,6 +255,13 @@ gem install sinatra --source http://localhost:4875
 ```bash
 # Mirror setting (routes all traffic through proxy without modifying Gemfile)
 bundle config set --global mirror.https://rubygems.org http://localhost:4875
+```
+
+### Go
+```bash
+# Set via environment variables
+export GOPROXY=http://localhost:4876,direct
+export GONOSUMCHECK=*
 ```
 
 ---
