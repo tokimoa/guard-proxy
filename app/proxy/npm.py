@@ -272,7 +272,7 @@ class NpmProxy:
 
     def _build_upstream_tarball_url(self, full_name: str, tarball_filename: str) -> str:
         """Build the full upstream URL for a tarball."""
-        return f"{self._registry._upstream_url}/{full_name}/-/{tarball_filename}"
+        return f"{self._registry.upstream_url}/{full_name}/-/{tarball_filename}"
 
 
 def _json_bytes(data: dict) -> bytes:

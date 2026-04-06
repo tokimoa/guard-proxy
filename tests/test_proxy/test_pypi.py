@@ -95,7 +95,8 @@ def test_name_version_extraction():
 
 
 def test_url_rewriting():
+    rewrite_hosts = {"files.pythonhosted.org", "pypi.org", "pypi.io"}
     html = '<a href="https://files.pythonhosted.org/packages/ab/cd/foo-1.0.whl">foo</a>'
-    result = PyPIProxy._rewrite_download_urls(html, "http://localhost:4874")
+    result = PyPIProxy._rewrite_download_urls(html, "http://localhost:4874", rewrite_hosts)
     assert "http://localhost:4874/packages/" in result
     assert "files.pythonhosted.org" not in result

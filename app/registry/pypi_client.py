@@ -18,6 +18,18 @@ class PyPIRegistryClient:
             follow_redirects=True,
         )
 
+    @property
+    def upstream_url(self) -> str:
+        return self._upstream_url
+
+    async def get(self, path: str, **kwargs: object) -> httpx.Response:
+        """Send a GET request to the upstream registry."""
+        url = f"{self._upstream_url}{path}"
+        try:
+            return await self._client.get(url, **kwargs)
+        except httpx.HTTPError as e:
+            raise UpstreamRegistryError(url=url, detail=str(e)) from e
+
     async def get_package_metadata(self, package_name: str) -> dict:
         """GET /pypi/<package>/json — full metadata."""
         url = f"{self._upstream_url}/pypi/{package_name}/json"

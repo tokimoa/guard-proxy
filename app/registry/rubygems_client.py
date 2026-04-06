@@ -18,6 +18,10 @@ class RubyGemsRegistryClient:
             follow_redirects=True,
         )
 
+    @property
+    def upstream_url(self) -> str:
+        return self._upstream_url
+
     async def get_gem_metadata(self, gem_name: str) -> dict:
         """GET /api/v1/gems/<name>.json — JSON metadata."""
         url = f"{self._upstream_url}/api/v1/gems/{gem_name}.json"
