@@ -80,6 +80,13 @@ class NpmRegistryClient:
         npm_user_data = version_data.get("_npmUser", {})
         npm_user = npm_user_data.get("name", "") if isinstance(npm_user_data, dict) else ""
 
+        # Extract license
+        raw_license = version_data.get("license", "")
+        if isinstance(raw_license, dict):
+            raw_license = raw_license.get("type", "")
+        elif not isinstance(raw_license, str):
+            raw_license = ""
+
         return NpmPackageMetadata(
             name=package_name,
             version=version,
@@ -91,6 +98,7 @@ class NpmRegistryClient:
             install_scripts=install_scripts,
             npm_user=npm_user,
             version_times=full_metadata.get("time", {}),
+            license=raw_license,
         )
 
     async def download_tarball(self, tarball_url: str) -> bytes:

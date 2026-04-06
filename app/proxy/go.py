@@ -126,10 +126,22 @@ class GoProxy:
         try:
             artifacts, tmp_dir = extract_go_module_zip(content)
 
+            # Extract license from LICENSE file if present
+            scan_metadata: dict = {}
+            for a in artifacts:
+                if a.name.upper().startswith("LICENSE") and a.is_file():
+                    try:
+                        content_text = a.read_text(errors="replace")[:2000]
+                        scan_metadata["license"] = _detect_license_from_text(content_text)
+                    except OSError:
+                        pass
+                    break
+
             package_info = PackageInfo(
                 name=module,
                 version=version,
                 registry="go",
+                metadata=scan_metadata,
             )
 
             if isinstance(self._pipeline, TieredScanPipeline):
@@ -202,3 +214,30 @@ class GoProxy:
             media_type="application/zip",
             headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
+
+
+def _detect_license_from_text(text: str) -> str:
+    """Best-effort license detection from LICENSE file content."""
+    upper = text.upper()
+    if "APACHE LICENSE" in upper and "VERSION 2" in upper:
+        return "Apache-2.0"
+    if "MIT LICENSE" in upper or "PERMISSION IS HEREBY GRANTED, FREE OF CHARGE" in upper:
+        return "MIT"
+    if "BSD" in upper and "REDISTRIBUTION AND USE" in upper:
+        if "3-CLAUSE" in upper or text.count("* ") >= 3:
+            return "BSD-3-Clause"
+        return "BSD-2-Clause"
+    if "GNU GENERAL PUBLIC LICENSE" in upper:
+        if "VERSION 3" in upper:
+            return "GPL-3.0-only"
+        if "VERSION 2" in upper:
+            return "GPL-2.0-only"
+    if "GNU LESSER GENERAL PUBLIC LICENSE" in upper:
+        return "LGPL-2.1-only"
+    if "MOZILLA PUBLIC LICENSE" in upper and "VERSION 2" in upper:
+        return "MPL-2.0"
+    if "ISC LICENSE" in upper or ("ISC" in upper and "PERMISSION TO USE" in upper):
+        return "ISC"
+    if "UNLICENSE" in upper or "THIS IS FREE AND UNENCUMBERED SOFTWARE" in upper:
+        return "Unlicense"
+    return ""

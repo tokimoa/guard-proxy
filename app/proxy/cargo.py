@@ -114,11 +114,14 @@ class CargoProxy:
         try:
             artifacts, tmp_dir = extract_cargo_crate(content)
 
-            # Fetch publish date
+            # Fetch publish date and license
             publish_date = None
+            scan_metadata: dict = {}
             try:
                 meta = await self._registry.get_version_metadata(crate_name, version)
                 publish_date = CargoRegistryClient.extract_publish_date(meta)
+                version_info = meta.get("version", {})
+                scan_metadata["license"] = version_info.get("license", "")
             except Exception:
                 logger.warning(
                     "Could not fetch metadata for {crate}@{ver}, proceeding with scan",
@@ -131,6 +134,7 @@ class CargoProxy:
                 version=version,
                 registry="cargo",
                 publish_date=publish_date,
+                metadata=scan_metadata,
             )
 
             if isinstance(self._pipeline, TieredScanPipeline):

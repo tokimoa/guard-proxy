@@ -45,3 +45,4 @@ class NpmPackageMetadata(BaseModel):
     install_scripts: dict[str, str] = {}
     npm_user: str = ""
     version_times: dict[str, str] = {}
+    license: str = ""

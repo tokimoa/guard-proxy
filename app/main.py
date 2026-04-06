@@ -53,6 +53,7 @@ from app.scanners.cooldown import CooldownScanner
 from app.scanners.dependency_scanner import DependencyScanner
 from app.scanners.heuristics_scanner import HeuristicsScanner
 from app.scanners.ioc_checker import IOCScanner
+from app.scanners.license_scanner import LicenseScanner
 from app.scanners.maintainer_scanner import MaintainerScanner
 from app.scanners.metadata_scanner import MetadataScanner
 from app.scanners.static_analysis import StaticAnalysisScanner
@@ -100,6 +101,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     ast_scanner = ASTScanner() if settings.ast_analysis_enabled else None
     yara_scanner = YARAScanner(settings.yara_rules_path or None) if settings.yara_enabled else None
     maintainer_scanner = MaintainerScanner(database) if settings.maintainer_check_enabled else None
+    license_scanner = LicenseScanner(settings) if settings.license_check_enabled else None
     depsdev_client = DepsDevClient(timeout=settings.depsdev_timeout)
     dependency_scanner = DependencyScanner(depsdev_client, settings) if settings.dependency_check_enabled else None
 
@@ -142,6 +144,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
             scanners.append(ast_scanner)
         if yara_scanner:
             scanners.append(yara_scanner)
+        if license_scanner:
+            scanners.append(license_scanner)
         return scanners
 
     def _build_slow_scanners():
@@ -250,6 +254,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         heuristics_scanner,
         ast_scanner,
         yara_scanner,
+        license_scanner,
     ]
     scanner_count = sum(1 for s in fast_scanners_list if s)
     logger.info("Fast tier: {n} scanners active", n=scanner_count)
