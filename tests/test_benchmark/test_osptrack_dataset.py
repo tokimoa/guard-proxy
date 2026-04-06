@@ -31,9 +31,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-_META_ZIP_URL = (
-    "https://zenodo.org/api/records/14197378/files/Wapiti08/OSPTrack-v1.0.0.zip/content"
-)
+_META_ZIP_URL = "https://zenodo.org/api/records/14197378/files/Wapiti08/OSPTrack-v1.0.0.zip/content"
 _IOC_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "known_malicious.json"
 _VER_PATTERN = re.compile(r"-(\d+\.\d+[\.\d]*|nan)$")
 
@@ -127,14 +125,14 @@ async def test_osptrack_pypi_coverage():
     estimated_malicious = int(total * 0.20)
     estimated_coverage = match_count / estimated_malicious * 100 if estimated_malicious else 0
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("OSPTrack PyPI Coverage")
     print(f"  Total packages in log:     {total:,}")
     print(f"  Matched in IOC DB:         {match_count:,}")
     print(f"  Match rate (all):          {match_rate:.1f}%")
     print(f"  Estimated malicious (~20%): {estimated_malicious:,}")
     print(f"  Estimated mal. coverage:   {estimated_coverage:.1f}%")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Should match a significant portion of the malicious subset
     assert match_count >= 500, f"Only {match_count} PyPI packages matched — expected 500+"
@@ -162,13 +160,13 @@ async def test_osptrack_npm_coverage():
     estimated_malicious = int(total * 0.20)
     estimated_coverage = match_count / estimated_malicious * 100 if estimated_malicious else 0
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("OSPTrack npm Coverage")
     print(f"  Total packages in log:     {total:,}")
     print(f"  Matched in IOC DB:         {match_count:,}")
     print(f"  Estimated malicious (~20%): {estimated_malicious:,}")
     print(f"  Estimated mal. coverage:   {estimated_coverage:.1f}%")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # npm has fewer OSPTrack entries than PyPI
     assert match_count >= 5, f"Only {match_count} npm packages matched"
@@ -191,9 +189,9 @@ async def test_osptrack_combined_summary():
     total_packages = 0
     total_matched = 0
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("OSPTrack Combined Coverage Report")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     for osp_eco, ioc_eco in eco_map.items():
         pkg_set = packages.get(osp_eco, set())
@@ -206,8 +204,7 @@ async def test_osptrack_combined_summary():
         est_cov = len(matched) / est_mal * 100 if est_mal else 0
 
         print(
-            f"  {osp_eco:10s}: {len(matched):5d} matched / {len(pkg_set):5d} total "
-            f"(est. {est_cov:.0f}% of malicious)"
+            f"  {osp_eco:10s}: {len(matched):5d} matched / {len(pkg_set):5d} total (est. {est_cov:.0f}% of malicious)"
         )
 
     est_total_mal = int(total_packages * 0.20)
@@ -215,6 +212,6 @@ async def test_osptrack_combined_summary():
 
     print(f"  {'TOTAL':10s}: {total_matched:5d} matched / {total_packages:5d} total")
     print(f"  Estimated malicious coverage: {est_overall:.0f}%")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     assert total_matched >= 500, f"Only {total_matched} total matched across all ecosystems"

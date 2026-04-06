@@ -83,7 +83,7 @@ async def test_datadog_npm_coverage():
     total_matched = len(matched)
     coverage = total_matched / total_dd * 100 if total_dd else 0
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("DataDog npm Dataset Coverage")
     print(f"  DataDog manifest:  {total_dd:,} malicious packages")
     print(f"  Guard Proxy IOC:   {len(ioc_npm):,} packages")
@@ -93,7 +93,7 @@ async def test_datadog_npm_coverage():
     print(f"  Coverage:          {coverage:.1f}%")
     if missing and len(missing) <= 20:
         print(f"  Missing samples:   {sorted(list(missing))[:20]}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # We expect high coverage since our IOC DB is synced from this dataset
     assert coverage >= 95.0, f"npm coverage {coverage:.1f}% below 95% — IOC DB may be stale, run `guard-proxy sync-ioc`"
@@ -121,14 +121,14 @@ async def test_datadog_pypi_coverage():
     total_matched = len(matched)
     coverage = total_matched / total_dd * 100 if total_dd else 0
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("DataDog PyPI Dataset Coverage")
     print(f"  DataDog manifest:  {total_dd:,} malicious packages")
     print(f"  Guard Proxy IOC:   {len(ioc_pypi):,} packages")
     print(f"  Matched:           {total_matched:,}")
     print(f"  Missing from IOC:  {len(missing):,}")
     print(f"  Coverage:          {coverage:.1f}%")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     assert coverage >= 95.0, f"PyPI coverage {coverage:.1f}% below 95% — IOC DB may be stale"
 
@@ -163,12 +163,12 @@ async def test_datadog_combined_summary():
 
     overall = total_matched / total_dd * 100 if total_dd else 0
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("DataDog Combined Coverage Report")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     for eco, r in results.items():
         print(f"  {eco:10s}: {r['matched']:,}/{r['datadog']:,} ({r['coverage']:.1f}%)")
     print(f"  {'TOTAL':10s}: {total_matched:,}/{total_dd:,} ({overall:.1f}%)")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     assert overall >= 95.0, f"Overall coverage {overall:.1f}% below 95%"

