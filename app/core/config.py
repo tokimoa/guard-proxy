@@ -124,6 +124,9 @@ class Settings(BaseSettings):
     dependency_check_enabled: bool = True
     depsdev_timeout: float = 2.0
 
+    # Reachability analysis
+    reachability_enabled: bool = True
+
     # License compliance
     license_check_enabled: bool = False
     license_denied_list: list[str] = []

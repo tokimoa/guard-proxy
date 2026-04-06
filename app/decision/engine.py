@@ -29,6 +29,7 @@ class DecisionEngine:
             "yara_scan": 0.55,
             "maintainer_check": 0.6,
             "dependency_check": 0.45,
+            "reachability": 0.5,
             "license_check": 0.4,
             "llm_judge": settings.llm_weight,
         }
