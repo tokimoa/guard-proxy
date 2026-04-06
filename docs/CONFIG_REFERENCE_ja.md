@@ -24,7 +24,11 @@
 | `RUBYGEMS_UPSTREAM_URL` | str | `https://rubygems.org` | RubyGems上流レジストリURL |
 | `GO_PROXY_PORT` | int | `4876` | Goモジュールプロキシのリスニングポート |
 | `GO_UPSTREAM_URL` | str | `https://proxy.golang.org` | Goモジュール上流プロキシURL |
+| `CARGO_PROXY_PORT` | int | `4877` | Cargoプロキシのリスニングポート |
+| `CARGO_UPSTREAM_URL` | str | `https://crates.io` | Cargo上流レジストリURL |
 | `ADMIN_API_PORT` | int | `8100` | 管理APIのリスニングポート |
+
+> **シングルポートルーティング (v2.5):** Guard Proxyは単一ポートでパスプレフィックスを使用して全レジストリを提供することも可能です: `/npm/`, `/pypi/`, `/gems/`, `/go/`, `/cargo/`。`ADMIN_API_PORT`を設定し、クライアントを `http://localhost:8100/<prefix>/` にルーティングしてください。
 
 ## クールダウンゲート設定
 
@@ -39,6 +43,29 @@
 |---|---|---|---|
 | `STATIC_ANALYSIS_ENABLED` | bool | `true` | 静的解析の有効/無効 |
 | `STATIC_ANALYSIS_SEVERITY_THRESHOLD` | str | `medium` | 報告する最低重要度 (`low` / `medium` / `high` / `critical`) |
+
+## ライセンスコンプライアンス設定
+
+| 環境変数 | 型 | デフォルト | 説明 |
+|---|---|---|---|
+| `LICENSE_CHECK_ENABLED` | bool | `false` | ライセンスコンプライアンスチェックの有効/無効 |
+| `LICENSE_DENIED_LIST` | list | `[]` | 拒否するSPDXライセンス識別子のリスト（例: `["GPL-3.0", "AGPL-3.0"]`） |
+| `LICENSE_ALLOWED_LIST` | list | `[]` | 明示的に許可するSPDXライセンス識別子のリスト（空 = 拒否リスト以外すべて許可） |
+| `LICENSE_CHECK_ACTION` | str | `warn` | ライセンス違反時の動作 (`warn` / `deny`) |
+| `LICENSE_COPYLEFT_ACTION` | str | `allow` | コピーレフトライセンスに対する動作 (`allow` / `warn` / `deny`) |
+
+## 到達可能性分析設定
+
+| 環境変数 | 型 | デフォルト | 説明 |
+|---|---|---|---|
+| `REACHABILITY_ENABLED` | bool | `true` | フラグ付きコードパスの到達可能性分析の有効/無効 |
+
+## YARAルール設定
+
+| 環境変数 | 型 | デフォルト | 説明 |
+|---|---|---|---|
+| `YARA_RULE_SOURCES` | list | `[]` | マルウェアシグネチャマッチング用の`.yar`ルールファイルのURLリスト |
+| `YARA_AUTO_UPDATE` | bool | `false` | 起動時にYARAルールを自動取得・更新する |
 
 ## LLM Judge 設定
 
@@ -105,9 +132,26 @@
 | `DECISION_MODE` | str | `warn` | 判定モード (`warn`: 警告のみ / `enforce`: ブロック有効) |
 | `WARN_THRESHOLD` | float | `0.3` | quarantine判定の閾値 |
 | `DENY_THRESHOLD` | float | `0.7` | deny判定の閾値 |
-| `COOLDOWN_WEIGHT` | float | `0.3` | クールダウンスキャナの重み |
-| `STATIC_ANALYSIS_WEIGHT` | float | `0.4` | 静的解析スキャナの重み |
-| `LLM_WEIGHT` | float | `0.3` | LLM Judgeスキャナの重み |
+
+### スキャナの重み
+
+全12スキャナが最終リスクスコアに寄与します。各重みはそのスキャナが判定に与える影響度を制御します。
+
+| 環境変数 | 型 | デフォルト | 説明 |
+|---|---|---|---|
+| `IOC_CHECK_WEIGHT` | float | `1.0` | IOC（侵害指標）チェックの重み |
+| `ADVISORY_CHECK_WEIGHT` | float | `0.9` | セキュリティアドバイザリチェックの重み |
+| `COOLDOWN_WEIGHT` | float | `0.3` | クールダウンスキャナの重み（設定可能） |
+| `METADATA_CHECK_WEIGHT` | float | `0.5` | パッケージメタデータチェックの重み |
+| `MAINTAINER_CHECK_WEIGHT` | float | `0.6` | メンテナ信頼度チェックの重み |
+| `STATIC_ANALYSIS_WEIGHT` | float | `0.4` | 静的解析スキャナの重み（設定可能） |
+| `HEURISTICS_CHECK_WEIGHT` | float | `0.35` | ヒューリスティクスチェックの重み |
+| `AST_ANALYSIS_WEIGHT` | float | `0.65` | AST解析の重み |
+| `YARA_SCAN_WEIGHT` | float | `0.55` | YARAルールスキャンの重み |
+| `REACHABILITY_WEIGHT` | float | `0.5` | 到達可能性分析の重み |
+| `LICENSE_CHECK_WEIGHT` | float | `0.4` | ライセンスコンプライアンスチェックの重み |
+| `DEPENDENCY_CHECK_WEIGHT` | float | `0.45` | 依存関係分析チェックの重み |
+| `LLM_WEIGHT` | float | `0.3` | LLM Judgeスキャナの重み（設定可能） |
 
 ## キャッシュ設定
 
@@ -260,6 +304,19 @@ bundle config set --global mirror.https://rubygems.org http://localhost:4875
 # 環境変数で設定
 export GOPROXY=http://localhost:4876,direct
 export GONOSUMCHECK=*
+```
+
+### Cargo
+```toml
+# ~/.cargo/config.toml
+[registries.guard-proxy]
+index = "sparse+http://localhost:4877/index/"
+
+[source.crates-io]
+replace-with = "guard-proxy"
+
+[source.guard-proxy]
+registry = "sparse+http://localhost:4877/index/"
 ```
 
 ---
