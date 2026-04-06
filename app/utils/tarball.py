@@ -387,6 +387,71 @@ def _extract_gem_data(data_bytes: bytes, tmp_dir: Path) -> list[Path]:
     return extracted
 
 
+# -- Go module zip extraction --
+
+_GO_TARGET_EXTENSIONS = {".go", ".c", ".h", ".s"}
+_GO_TARGET_FILES = {"go.mod"}
+
+
+def _is_go_target(name: str) -> bool:
+    """Check if a file is relevant for Go module security scanning."""
+    basename = Path(name).name
+    if basename in _GO_TARGET_FILES:
+        return True
+    return Path(name).suffix in _GO_TARGET_EXTENSIONS
+
+
+def extract_go_module_zip(content: bytes) -> tuple[list[Path], Path]:
+    """Extract security-relevant files from a Go module zip.
+
+    Go module zips have structure: module@version/path/to/file.go
+    Returns:
+        Tuple of (list of extracted file paths, temp directory path).
+    """
+    tmp_dir = Path(tempfile.mkdtemp(prefix="guard-proxy-go-"))
+    extracted: list[Path] = []
+    total_bytes = 0
+
+    try:
+        with zipfile.ZipFile(io.BytesIO(content)) as zf:
+            for info in zf.infolist():
+                if info.is_dir() or info.file_size > _MAX_FILE_SIZE:
+                    continue
+
+                # Strip top-level module@version/ directory
+                parts = Path(info.filename).parts
+                if len(parts) < 2:
+                    relative = info.filename
+                else:
+                    relative = str(Path(*parts[1:]))
+
+                if ".." in relative:
+                    continue
+
+                if not _is_go_target(info.filename) and not _is_go_target(relative):
+                    continue
+
+                if len(extracted) >= _MAX_FILE_COUNT:
+                    logger.warning("File count limit reached during Go zip extraction")
+                    break
+                total_bytes += info.file_size
+                if total_bytes > _MAX_TOTAL_SIZE:
+                    logger.warning("Total size limit reached during Go zip extraction")
+                    break
+
+                target = tmp_dir / relative
+                if not _is_safe_path(tmp_dir, target):
+                    continue
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(zf.read(info.filename))
+                extracted.append(target)
+
+    except zipfile.BadZipFile as e:
+        raise TarballExtractionError(str(e)) from e
+
+    return extracted, tmp_dir
+
+
 def parse_gemspec_extensions(metadata_path: Path) -> list[str]:
     """Extract extensions array from gemspec YAML without full YAML parsing."""
     if not metadata_path.exists():
