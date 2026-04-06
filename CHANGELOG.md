@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-04-07
+
+### Added
+
+- **51 new tests** — test count 416 → 467
+  - `NotificationService` (15 tests): webhook sending, rate limiting, error handling, verdict filtering
+  - `BackgroundScanManager` (12 tests): scheduling, scanner execution, deny-cap safety guard, tmp dir cleanup, shutdown
+  - LLM providers (24 tests): Anthropic, Ollama, OpenAI — judge, availability, JSON parsing, verdict normalization, error propagation
+
+### Changed
+
+- `.env.example` synced with `config.py` — added `SLACK_WEBHOOK_URL`, scanner toggle flags, advisory sync, deps.dev settings; removed stale `LLM_TRIGGER_ON_WARN`
+- PyPI classifier updated from `Development Status :: 4 - Beta` to `5 - Production/Stable`
+
 ## [1.0.0] - 2026-04-07
 
 First stable release. Declares API and proxy behavior stable for production use.
@@ -100,6 +114,7 @@ Security hardening and feature improvements from code review.
 | Real-world incidents 2024–2026 (23 CVEs) | 23/23 | 100% |
 | False positives (100 popular packages) | 0 | 0% |
 
+[1.1.0]: https://github.com/tokimoa/guard-proxy/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/tokimoa/guard-proxy/compare/v0.3.0...v1.0.0
 [0.3.0]: https://github.com/tokimoa/guard-proxy/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/tokimoa/guard-proxy/compare/v0.1.0...v0.2.0
