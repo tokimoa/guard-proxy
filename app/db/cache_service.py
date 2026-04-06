@@ -7,6 +7,7 @@ from loguru import logger
 from sqlalchemy import delete, select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
+from app.api.routers.metrics import increment
 from app.core.config import Settings
 from app.db.models.scan_cache import ScanCache
 from app.db.session import Database
@@ -34,8 +35,10 @@ class CacheService:
             row = (await session.execute(stmt)).scalar_one_or_none()
 
         if row is None:
+            increment("cache_misses")
             return None
 
+        increment("cache_hits")
         logger.debug("Cache hit: {key}", key=key)
         scan_results = [ScanResult.model_validate(r) for r in json.loads(row.scan_results_json)]
         return DecisionResult(

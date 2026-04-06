@@ -7,11 +7,13 @@ from urllib.parse import urlparse
 from fastapi import APIRouter, Request, Response
 from loguru import logger
 
+from app.api.routers.metrics import increment
 from app.core.config import Settings
 from app.core.exceptions import PackageBlockedError
 from app.db.audit_service import AuditService
 from app.db.cache_service import CacheService
 from app.decision.engine import DecisionEngine
+from app.notifications import NotificationService
 from app.registry.pypi_client import PyPIRegistryClient
 from app.scanners.background import BackgroundScanManager
 from app.scanners.base import ScanPipeline, TieredScanPipeline
@@ -40,6 +42,7 @@ class PyPIProxy:
         cache_service: CacheService | None = None,
         audit_service: AuditService | None = None,
         bg_manager: BackgroundScanManager | None = None,
+        notification_service: NotificationService | None = None,
     ) -> None:
         self._settings = settings
         self._registry = registry_client
@@ -48,6 +51,7 @@ class PyPIProxy:
         self._cache = cache_service
         self._audit = audit_service
         self._bg_manager = bg_manager
+        self._notifications = notification_service
         self._files_base_url = self._derive_files_base_url()
 
     def get_router(self) -> APIRouter:
@@ -201,8 +205,16 @@ class PyPIProxy:
             tag=deferred_tag,
         )
 
+        # Metrics
+        increment("scans_total")
+        increment(f"scan_{decision.verdict}")
+
         if self._audit:
             await self._audit.log_decision("pypi", pkg_name, version, decision, request_path)
+
+        # Notifications
+        if self._notifications:
+            await self._notifications.notify_decision("pypi", pkg_name, version, decision)
 
         if decision.verdict == "deny" and decision.mode == "enforce":
             raise PackageBlockedError(package_name=pkg_name, version=version, reason=decision.reason)

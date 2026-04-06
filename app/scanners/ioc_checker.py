@@ -54,10 +54,7 @@ class IOCDatabase:
             for domain in data.get("c2_domains", [])
         ]
         self._c2_domain_suffixes = data.get("c2_domain_suffixes", [])
-        self._c2_ips = [
-            (ip, re.compile(r"(?<!\d)" + re.escape(ip) + r"(?!\d)"))
-            for ip in data.get("c2_ips", [])
-        ]
+        self._c2_ips = [(ip, re.compile(r"(?<!\d)" + re.escape(ip) + r"(?!\d)")) for ip in data.get("c2_ips", [])]
         self._malicious_hashes = set(data.get("malicious_hashes", {}).get("sha256", []))
 
         total_pkgs = len(self._npm_packages) + len(self._pypi_packages) + len(self._rubygems_packages)

@@ -1,9 +1,15 @@
 """Notification service for security events (Slack webhook)."""
 
+import time
+
 import httpx
 from loguru import logger
 
 from app.schemas.decision import DecisionResult
+
+# Rate limit: max notifications per window
+_RATE_LIMIT_MAX = 10
+_RATE_LIMIT_WINDOW = 60  # seconds
 
 
 class NotificationService:
@@ -12,6 +18,13 @@ class NotificationService:
     def __init__(self, webhook_url: str | None = None) -> None:
         self._webhook_url = webhook_url
         self._enabled = bool(webhook_url)
+        self._send_times: list[float] = []
+
+    def _is_rate_limited(self) -> bool:
+        """Check if we've exceeded the rate limit."""
+        now = time.monotonic()
+        self._send_times = [t for t in self._send_times if now - t < _RATE_LIMIT_WINDOW]
+        return len(self._send_times) >= _RATE_LIMIT_MAX
 
     async def notify_decision(
         self,
@@ -22,6 +35,10 @@ class NotificationService:
     ) -> None:
         """Send notification for non-allow decisions."""
         if not self._enabled or decision.verdict == "allow":
+            return
+
+        if self._is_rate_limited():
+            logger.warning("Notification rate limit reached, skipping")
             return
 
         emoji = ":warning:" if decision.verdict == "quarantine" else ":no_entry:"
@@ -58,5 +75,6 @@ class NotificationService:
                         "Slack webhook returned {status}",
                         status=resp.status_code,
                     )
+            self._send_times.append(time.monotonic())
         except Exception:
             logger.exception("Failed to send Slack notification")
