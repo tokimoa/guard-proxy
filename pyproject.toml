@@ -1,6 +1,6 @@
 [project]
 name = "guard-proxy"
-version = "0.1.0"
+version = "1.0.0"
 description = "Supply chain security proxy for npm, PyPI, and RubyGems — blocks malicious packages before they execute"
 readme = "README.md"
 license = "MIT"
