@@ -32,11 +32,13 @@ from app.db.cache_service import CacheService
 from app.db.session import Database
 from app.decision.engine import DecisionEngine
 from app.notifications import NotificationService
+from app.proxy.go import GoProxy
 from app.proxy.middleware import RequestLoggingMiddleware
 from app.proxy.npm import NpmProxy
 from app.proxy.pypi import PyPIProxy
 from app.proxy.rubygems import RubyGemsProxy
 from app.registry.depsdev_client import DepsDevClient
+from app.registry.go_client import GoRegistryClient
 from app.registry.npm_client import NpmRegistryClient
 from app.registry.pypi_client import PyPIRegistryClient
 from app.registry.rubygems_client import RubyGemsRegistryClient
@@ -51,6 +53,7 @@ from app.scanners.ioc_checker import IOCScanner
 from app.scanners.maintainer_scanner import MaintainerScanner
 from app.scanners.metadata_scanner import MetadataScanner
 from app.scanners.static_analysis import StaticAnalysisScanner
+from app.scanners.static_analysis_go import GoStaticAnalysisScanner
 from app.scanners.static_analysis_pypi import PyPIStaticAnalysisScanner
 from app.scanners.static_analysis_rubygems import RubyGemsStaticAnalysisScanner
 from app.scanners.yara_scanner import YARAScanner
@@ -66,6 +69,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     logger.info("npm upstream: {url}", url=settings.npm_upstream_url)
     logger.info("PyPI upstream: {url}", url=settings.pypi_upstream_url)
     logger.info("RubyGems upstream: {url}", url=settings.rubygems_upstream_url)
+    logger.info("Go upstream: {url}", url=settings.go_upstream_url)
 
     # Database
     database = Database(settings)
@@ -198,6 +202,22 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         notification_service,
     )
 
+    # --- Go proxy (tiered pipeline) ---
+    go_registry = GoRegistryClient(settings)
+    go_fast = _build_fast_scanners(GoStaticAnalysisScanner(settings))
+    go_slow = _build_slow_scanners()
+    go_pipeline = TieredScanPipeline(go_fast, go_slow)
+    go_proxy = GoProxy(
+        settings,
+        go_registry,
+        go_pipeline,
+        decision_engine,
+        cache_service,
+        audit_service,
+        bg_manager,
+        notification_service,
+    )
+
     if llm_scanner:
         logger.info("LLM Judge enabled — tiered scanning active")
     fast_scanners_list = [
@@ -221,6 +241,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     app.include_router(cache_router)
     app.include_router(config_router)
     app.include_router(audit_router)
+    app.include_router(go_proxy.get_router())
     app.include_router(rubygems_proxy.get_router())
     app.include_router(pypi_proxy.get_router())
     app.include_router(npm_proxy.get_router())
@@ -231,7 +252,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     app.state.settings = settings
     app.state.bg_manager = bg_manager
 
-    logger.info("Guard Proxy ready — listening for npm, PyPI, and RubyGems requests")
+    logger.info("Guard Proxy ready — listening for npm, PyPI, RubyGems, and Go requests")
     yield
 
     # Shutdown
@@ -243,6 +264,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     await npm_registry.close()
     await pypi_registry.close()
     await rubygems_registry.close()
+    await go_registry.close()
     await database.close()
     logger.info("Guard Proxy shut down")
 

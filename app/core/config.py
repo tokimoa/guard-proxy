@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     pypi_upstream_url: str = "https://pypi.org"
     rubygems_proxy_port: int = 4875
     rubygems_upstream_url: str = "https://rubygems.org"
+    go_proxy_port: int = 4876
+    go_upstream_url: str = "https://proxy.golang.org"
     admin_api_port: int = 8100
 
     # Cooldown gate

@@ -22,6 +22,8 @@ def detect_install_hooks(
         return _detect_pypi_hooks(filename, artifacts)
     if registry == "rubygems":
         return _detect_rubygems_hooks(artifacts)
+    if registry == "go":
+        return _detect_go_hooks(artifacts)
     return False
 
 
@@ -58,4 +60,20 @@ def _detect_rubygems_hooks(artifacts: list[Path]) -> bool:
         # rubygems_plugin.rb is auto-loaded by RubyGems
         if a.name == "rubygems_plugin.rb":
             return True
+    return False
+
+
+def _detect_go_hooks(artifacts: list[Path]) -> bool:
+    """Go: check if any .go file contains an init() function."""
+    import re
+
+    init_pattern = re.compile(r"^func\s+init\s*\(", re.MULTILINE)
+    for a in artifacts:
+        if a.suffix == ".go" and a.exists():
+            try:
+                content = a.read_text(errors="replace")
+                if init_pattern.search(content):
+                    return True
+            except OSError:
+                continue
     return False
