@@ -216,13 +216,18 @@ Evaluated against public, third-party benchmarks — not just internal tests.
 
 | Benchmark | Source | Detected | Rate |
 |---|---|---|---|
-| **GuardDog rules** (source + metadata) | [DataDog](https://github.com/DataDog/guarddog) | 28/28 | **100%** |
+| **GuardDog rules** (npm + PyPI) | [DataDog](https://github.com/DataDog/guarddog) | 28/28 | **100%** |
+| **GuardDog rules** (Go) | [DataDog](https://github.com/DataDog/guarddog) | 5/5 | **100%** |
+| **GuardDog rules** (RubyGems) | [DataDog](https://github.com/DataDog/guarddog) | 7/7 | **100%** |
 | **BKC attack taxonomy** | [Springer/Uni Bonn](https://arxiv.org/abs/2005.09535) | 12/12 | **100%** |
+| **OSSF malicious-packages** | [OpenSSF](https://github.com/ossf/malicious-packages) | 18/18 | **100%** |
+| **OSPTrack categories** | [Zenodo/arXiv](https://arxiv.org/html/2411.14829v1) | 20/20 | **100%** |
 | Real-world incidents (2024-2026) | Documented CVEs | 23/23 | **100%** |
-| Go attack vectors | Known attack vectors\* | 10/10 | **100%** |
-| Adversarial evasion techniques | Internal | 20/20 | **100%** |
+| Go attack vectors | Known attack patterns\* | 10/10 | **100%** |
+| Cargo attack vectors | Known attack patterns\* | 8/8 | **100%** |
+| Adversarial evasion techniques | Internal | 35/35 | **100%** |
 
-\* No standardized Go-specific supply chain benchmark exists yet. Tests cover exec.Command in init(), CGo abuse, go:generate injection, cloud metadata theft, webhook exfiltration, go.mod replace attacks, etc.
+\* No standardized Go/Cargo-specific supply chain benchmark exists yet. Tests are based on real incidents (BoltDB typosquat, faster_log, evm-units) and known attack vectors.
 
 ### False Positive Rate
 
@@ -232,10 +237,11 @@ Evaluated against public, third-party benchmarks — not just internal tests.
 | PyPI | 34 | **0** |
 | RubyGems | 32 | **0** |
 | Go | 20 | **0** |
+| Cargo | 15 | **0** |
 
 ### Detection Categories (MITRE ATT&CK T1195)
 
-Install-time execution, credential theft, network exfiltration, code obfuscation, process execution, file system manipulation, persistence mechanisms, typosquatting, cryptomining, Unicode steganography, time-bombs, and more.
+Install-time execution, credential theft, network exfiltration, code obfuscation, process execution, file system manipulation, persistence mechanisms, typosquatting, cryptomining, Unicode steganography, time-bombs, reachability analysis, license compliance, and more.
 
 Full details: [docs/](docs/)
 
@@ -245,8 +251,7 @@ Transparency matters. Here's what you should know:
 
 - **Not a CVE scanner** — Use `npm audit` / `pip-audit` alongside Guard Proxy for known vulnerability checking
 - **No sandbox/dynamic analysis** — Detection is static + LLM-based, not runtime execution
-- **No reachability analysis** — Cannot determine if vulnerable code is actually called (Socket.dev does this)
-- **No license compliance** — Use dedicated tools for license auditing
+- **Intra-file reachability only** — Call graph analysis is limited to single-file scope (cross-file requires LLM tier)
 - **4 registries only** — npm, PyPI, RubyGems, Go. Cargo, Maven planned for future releases
 
 Guard Proxy is designed to **complement** existing tools, not replace them.
