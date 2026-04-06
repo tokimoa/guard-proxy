@@ -2,8 +2,8 @@
 
 [日本語ドキュメント](docs/ARCHITECTURE_ja.md) | [English docs](docs/)
 
-> Supply chain security proxy for npm, PyPI, and RubyGems.
-> Intercepts `npm install` / `pip install` / `gem install` transparently and blocks malicious packages before they execute.
+> Supply chain security proxy for npm, PyPI, RubyGems, and Go modules.
+> Intercepts `npm install` / `pip install` / `gem install` / `go get` transparently and blocks malicious packages before they execute.
 
 [![CI](https://github.com/tokimoa/guard-proxy/actions/workflows/ci.yml/badge.svg)](https://github.com/tokimoa/guard-proxy/actions/workflows/ci.yml)
 
@@ -96,10 +96,19 @@ pip install --index-url http://localhost:4873/simple/ --trusted-host localhost f
 ### gem / bundler
 ```bash
 # gem
-gem install sinatra --source http://localhost:4873
+gem install sinatra --source http://localhost:4875
 
 # bundler (recommended — all traffic routed through proxy)
-bundle config set --global mirror.https://rubygems.org http://localhost:4873
+bundle config set --global mirror.https://rubygems.org http://localhost:4875
+```
+
+### go
+```bash
+GOPROXY=http://localhost:4876,direct go get github.com/gin-gonic/gin
+
+# Or set permanently
+export GOPROXY=http://localhost:4876,direct
+export GONOSUMCHECK=*
 ```
 
 ## How It Works
@@ -117,7 +126,7 @@ npm install express
 │  ├─ Cooldown Gate (new package age)                         │
 │  ├─ Typosquatting Detection (Levenshtein, 6000+ packages)   │
 │  ├─ Maintainer Change Tracking                              │
-│  ├─ Static Analysis (160+ patterns × 3 registries)          │
+│  ├─ Static Analysis (180+ patterns × 4 registries)          │
 │  ├─ YARA Rules (GuardDog compatible)                        │
 │  ├─ Heuristics (entropy, binary, Unicode steganography)     │
 │  └─ AST Analysis (variable indirection, dataflow)           │
@@ -210,7 +219,10 @@ Evaluated against public, third-party benchmarks — not just internal tests.
 | **GuardDog rules** (source + metadata) | [DataDog](https://github.com/DataDog/guarddog) | 28/28 | **100%** |
 | **BKC attack taxonomy** | [Springer/Uni Bonn](https://arxiv.org/abs/2005.09535) | 12/12 | **100%** |
 | Real-world incidents (2024-2026) | Documented CVEs | 23/23 | **100%** |
+| Go attack vectors | Known attack vectors\* | 10/10 | **100%** |
 | Adversarial evasion techniques | Internal | 20/20 | **100%** |
+
+\* No standardized Go-specific supply chain benchmark exists yet. Tests cover exec.Command in init(), CGo abuse, go:generate injection, cloud metadata theft, webhook exfiltration, go.mod replace attacks, etc.
 
 ### False Positive Rate
 
@@ -219,6 +231,7 @@ Evaluated against public, third-party benchmarks — not just internal tests.
 | npm | 34 | **0** |
 | PyPI | 34 | **0** |
 | RubyGems | 32 | **0** |
+| Go | 20 | **0** |
 
 ### Detection Categories (MITRE ATT&CK T1195)
 
@@ -234,7 +247,7 @@ Transparency matters. Here's what you should know:
 - **No sandbox/dynamic analysis** — Detection is static + LLM-based, not runtime execution
 - **No reachability analysis** — Cannot determine if vulnerable code is actually called (Socket.dev does this)
 - **No license compliance** — Use dedicated tools for license auditing
-- **3 registries only** — npm, PyPI, RubyGems. Go, Cargo, Maven planned for v2
+- **4 registries only** — npm, PyPI, RubyGems, Go. Cargo, Maven planned for future releases
 
 Guard Proxy is designed to **complement** existing tools, not replace them.
 
@@ -264,14 +277,16 @@ Guard Proxy generates [CycloneDX 1.6](https://cyclonedx.org/) SBOMs for every sc
 guard-proxy sbom --file sbom.json
 ```
 
-## v2 Roadmap
+## Roadmap
 
-- [ ] **Go module support** (proxy.golang.org)
+- [x] **Go module support** (proxy.golang.org) — v2.0.0
+- [x] **Dashboard UI** (scan history visualization) — v2.0.0
+- [x] **DevContainer integration** (one-click setup) — v2.0.0
 - [ ] **Reachability analysis** (extend AST to call-graph traversal)
+- [ ] **Cargo (Rust) support**
 - [ ] **YARA rule marketplace** (community-contributed rules)
-- [ ] **DevContainer integration** (one-click setup)
-- [ ] **Dashboard UI** (scan history visualization)
-- [ ] **Cargo/Maven support**
+- [ ] **Multi-registry single port** (path-based routing)
+- [ ] **Maven (Java) support**
 
 ## Documentation
 

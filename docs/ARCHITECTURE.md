@@ -4,7 +4,7 @@
 
 ## Overview
 
-Guard Proxy is a security proxy that protects developers from supply chain attacks targeting npm, PyPI, and RubyGems. It transparently intercepts `npm install` / `pip install` / `gem install` commands, verifies package safety, and only then permits the download.
+Guard Proxy is a security proxy that protects developers from supply chain attacks targeting npm, PyPI, RubyGems, and Go modules. It transparently intercepts `npm install` / `pip install` / `gem install` / `go get` commands, verifies package safety, and only then permits the download.
 
 ## Background and Motivation
 
@@ -80,7 +80,7 @@ Developer (npm install / pip install / gem install)
 +----------------------------------------------------------+
     |
     v
-Upstream Registries (registry.npmjs.org / pypi.org / rubygems.org)
+Upstream Registries (registry.npmjs.org / pypi.org / rubygems.org / proxy.golang.org)
 ```
 
 ## Component Details
@@ -95,6 +95,7 @@ Handles HTTP request interception and relaying to upstream registries.
 | `npm.py` | npm registry API protocol implementation, including tarball URL redirect handling |
 | `pypi.py` | PyPI Simple API / JSON API protocol implementation |
 | `rubygems.py` | RubyGems Compact Index / gem download protocol implementation |
+| `go.py` | GOPROXY protocol implementation, module zip interception and scanning |
 | `middleware.py` | Common middleware for request logging, timeout control, etc. |
 
 #### npm Proxy Communication Flow
@@ -412,7 +413,8 @@ Local Development:
     npm proxy:       localhost:4873
     PyPI proxy:      localhost:4874
     RubyGems proxy:  localhost:4875
-    Admin API:       localhost:8100
+    Go proxy:        localhost:4876
+    Admin API:       localhost:8100 (includes /dashboard)
   Ollama:            localhost:11434 (LLM inference)
 
 Team Server:
@@ -420,6 +422,7 @@ Team Server:
     npm proxy:       guard.internal.example.com:4873
     PyPI proxy:      guard.internal.example.com:4874
     RubyGems proxy:  guard.internal.example.com:4875
+    Go proxy:        guard.internal.example.com:4876
     Admin API:       guard.internal.example.com:8100
   Ollama:        Same server or separate host (GPU-equipped machine)
 ```
