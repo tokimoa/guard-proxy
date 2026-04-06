@@ -22,6 +22,8 @@
 | `PYPI_UPSTREAM_URL` | str | `https://pypi.org` | PyPI上流レジストリURL |
 | `RUBYGEMS_PROXY_PORT` | int | `4875` | RubyGemsプロキシのリスニングポート |
 | `RUBYGEMS_UPSTREAM_URL` | str | `https://rubygems.org` | RubyGems上流レジストリURL |
+| `GO_PROXY_PORT` | int | `4876` | Goモジュールプロキシのリスニングポート |
+| `GO_UPSTREAM_URL` | str | `https://proxy.golang.org` | Goモジュール上流プロキシURL |
 | `ADMIN_API_PORT` | int | `8100` | 管理APIのリスニングポート |
 
 ## クールダウンゲート設定
@@ -251,6 +253,13 @@ gem install sinatra --source http://localhost:4875
 ```bash
 # mirror設定（Gemfile変更不要で全トラフィックをプロキシ経由）
 bundle config set --global mirror.https://rubygems.org http://localhost:4875
+```
+
+### Go
+```bash
+# 環境変数で設定
+export GOPROXY=http://localhost:4876,direct
+export GONOSUMCHECK=*
 ```
 
 ---
