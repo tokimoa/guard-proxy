@@ -26,5 +26,17 @@ jobs:
         with:
           version: "latest"
       - run: uv sync --frozen
-      - name: Run all tests (unit + benchmark)
-        run: uv run pytest -v --cov=app --cov=cli --cov-report=term-missing
+      - name: Run all tests with coverage
+        run: uv run pytest -v --cov=app --cov=cli --cov-report=term-missing --cov-fail-under=65
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+      - run: uv sync --frozen
+      - run: uv run pip install bandit
+      - name: Run bandit security scan
+        run: uv run bandit -r app/ -c pyproject.toml -q

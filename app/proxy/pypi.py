@@ -149,7 +149,11 @@ class PyPIProxy:
                     "requires_dist": info.get("requires_dist") or [],
                 }
             except Exception:
-                pass
+                logger.warning(
+                    "Could not fetch metadata for {pkg}@{ver}, proceeding with scan",
+                    pkg=pkg_name,
+                    ver=version,
+                )
 
             package_info = PackageInfo(
                 name=pkg_name,
