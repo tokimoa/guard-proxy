@@ -15,6 +15,8 @@ app = typer.Typer(
     help="Security proxy for npm/PyPI — protect developers from supply chain attacks.",
     no_args_is_help=True,
 )
+rules_app = typer.Typer(help="Manage YARA rule sources and updates.")
+app.add_typer(rules_app, name="rules")
 console = Console()
 
 
@@ -418,6 +420,116 @@ async def _async_run_and_display(pipeline, engine, pkg_info, artifacts) -> None:
         v_color = {"pass": "green", "warn": "yellow", "fail": "red"}.get(r.verdict, "white")
         console.print(f"\n  [{v_color}][{r.scanner_name}][/{v_color}] {r.verdict} (confidence={r.confidence:.2f})")
         console.print(f"    {r.details[:200]}")
+
+
+@rules_app.command(name="list")
+def rules_list(
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show individual rules"),
+) -> None:
+    """List installed YARA rule sources and rules."""
+    from app.rules.manager import RuleManager
+
+    manager = RuleManager()
+
+    sources = manager.list_sources()
+    if not sources:
+        console.print("[dim]No rule sources installed.[/dim]")
+        console.print("Add one with: guard-proxy rules add <name> <url>")
+        return
+
+    table = Table(title="YARA Rule Sources")
+    table.add_column("Name", style="cyan")
+    table.add_column("Rules", justify="right", style="green")
+    table.add_column("Description")
+    table.add_column("Updated", style="dim")
+    table.add_column("SHA256", style="dim")
+
+    for s in sources:
+        updated = s["updated_at"][:10] if s["updated_at"] else "-"
+        table.add_row(s["name"], str(s["rule_count"]), s["description"], updated, s["sha256"] or "-")
+
+    console.print(table)
+    console.print(f"\n  Total sources: {len(sources)}")
+
+    if verbose:
+        rules = manager.list_rules()
+        if rules:
+            console.print()
+            rt = Table(title="Individual Rules")
+            rt.add_column("Rule", style="cyan")
+            rt.add_column("Severity", style="yellow")
+            rt.add_column("Source File", style="dim")
+            rt.add_column("Description")
+            for r in rules:
+                sev_color = {"critical": "red", "high": "yellow", "medium": "cyan"}.get(r["severity"], "white")
+                rt.add_row(r["name"], f"[{sev_color}]{r['severity']}[/{sev_color}]", r["source_file"], r["description"])
+            console.print(rt)
+            console.print(f"\n  Total rules: {len(rules)}")
+
+
+@rules_app.command(name="update")
+def rules_update(
+    source_name: str = typer.Argument(None, help="Source name to update (default: all)"),
+) -> None:
+    """Fetch latest YARA rules from configured sources."""
+    from app.rules.manager import RuleManager
+
+    manager = RuleManager()
+
+    async def _update() -> list[dict]:
+        if source_name:
+            result = await manager.update_source(source_name)
+            return [result]
+        return await manager.update_all()
+
+    results = asyncio.run(_update())
+
+    for r in results:
+        status = r.get("status", "unknown")
+        name = r.get("name", "?")
+        if status == "updated":
+            console.print(f"  [green]{name}[/green]: updated ({r['rule_count']} rules)")
+        elif status == "unchanged":
+            console.print(f"  [dim]{name}[/dim]: unchanged")
+        elif status == "skipped":
+            console.print(f"  [dim]{name}[/dim]: skipped ({r.get('reason', '')})")
+        elif status == "error":
+            console.print(f"  [red]{name}[/red]: error — {r.get('error', '')}")
+
+
+@rules_app.command(name="add")
+def rules_add(
+    name: str = typer.Argument(help="Source name (e.g., 'guarddog-community')"),
+    url: str = typer.Argument(help="URL to .yar file"),
+    description: str = typer.Option("", help="Description of this rule source"),
+) -> None:
+    """Add a new YARA rule source."""
+    from app.rules.manager import RuleManager
+
+    manager = RuleManager()
+
+    async def _add() -> dict:
+        return await manager.add_source(name, url, description)
+
+    try:
+        result = asyncio.run(_add())
+        console.print(f"  [green]Added '{name}'[/green]: {result['rule_count']} rules installed")
+    except Exception as e:
+        console.print(f"  [red]Error[/red]: {e}")
+
+
+@rules_app.command(name="remove")
+def rules_remove(
+    name: str = typer.Argument(help="Source name to remove"),
+) -> None:
+    """Remove a YARA rule source."""
+    from app.rules.manager import RuleManager
+
+    manager = RuleManager()
+    if manager.remove_source(name):
+        console.print(f"  [green]Removed '{name}'[/green]")
+    else:
+        console.print(f"  [yellow]Source '{name}' not found[/yellow]")
 
 
 if __name__ == "__main__":

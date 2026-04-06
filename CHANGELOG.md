@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-04-07
+
+### Added
+
+- **YARA rule marketplace** — community rule source management
+  - `RuleManager` for downloading, validating, and installing rule packs from URLs
+  - `RuleIndex` for persistent tracking of installed rule sources (JSON index)
+  - CLI commands: `guard-proxy rules list`, `rules update`, `rules add`, `rules remove`
+  - `--verbose` flag on `rules list` shows individual rules with metadata
+  - Auto-update on startup via `YARA_AUTO_UPDATE=true` + `YARA_RULE_SOURCES`
+  - SHA256 change detection — skip re-download if content unchanged
+  - plyara validation before installation (rejects invalid rule files)
+- New config options: `YARA_RULE_SOURCES`, `YARA_AUTO_UPDATE`
+- 18 new tests (index, manager, download, validation)
+
 ## [2.3.0] - 2026-04-07
 
 ### Added
