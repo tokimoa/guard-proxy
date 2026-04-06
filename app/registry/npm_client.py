@@ -22,6 +22,10 @@ class NpmRegistryClient:
             headers={"Accept": "application/json"},
         )
 
+    @property
+    def upstream_url(self) -> str:
+        return self._upstream_url
+
     async def get_package_metadata(self, package_name: str) -> dict:
         """Fetch full package metadata from registry.
 

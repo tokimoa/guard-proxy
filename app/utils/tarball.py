@@ -22,6 +22,12 @@ _ALWAYS_EXTRACT = {"package.json"}
 # Maximum individual file size to extract (2MB)
 _MAX_FILE_SIZE = 2 * 1024 * 1024
 
+# Maximum total extracted bytes (50MB)
+_MAX_TOTAL_SIZE = 50 * 1024 * 1024
+
+# Maximum number of files to extract
+_MAX_FILE_COUNT = 1000
+
 
 def _is_safe_path(base: Path, target: Path) -> bool:
     """Zip-slip protection: ensure target is within base directory."""
@@ -43,21 +49,25 @@ def extract_npm_install_scripts(tarball_content: bytes) -> tuple[list[Path], Pat
     extracted: list[Path] = []
 
     try:
-        with tarfile.open(fileobj=io.BytesIO(tarball_content), mode="r:gz") as tar:
-            # First pass: extract package.json to find install scripts
+        buf = io.BytesIO(tarball_content)
+
+        # First pass: extract package.json to find install scripts
+        with tarfile.open(fileobj=buf, mode="r:gz") as tar:
             package_json = _extract_package_json(tar, tmp_dir)
             if package_json:
                 extracted.append(package_json)
 
-            # Parse install scripts from package.json
-            script_files = _find_script_files(package_json)
+        # Parse install scripts from package.json
+        script_files = _find_script_files(package_json)
 
-            # Second pass: extract referenced script files
-            for member in tar.getmembers():
+        # Second pass: extract referenced script files (iterate, don't getmembers)
+        total_bytes = 0
+        buf.seek(0)
+        with tarfile.open(fileobj=buf, mode="r:gz") as tar:
+            for member in tar:
                 if not member.isfile() or member.size > _MAX_FILE_SIZE:
                     continue
 
-                # Normalize path: npm tarballs have a "package/" prefix
                 relative = _normalize_member_path(member.name)
                 if relative is None:
                     continue
@@ -68,6 +78,13 @@ def extract_npm_install_scripts(tarball_content: bytes) -> tuple[list[Path], Pat
                     continue
 
                 if relative in script_files:
+                    if len(extracted) >= _MAX_FILE_COUNT:
+                        logger.warning("File count limit reached during extraction")
+                        break
+                    total_bytes += member.size
+                    if total_bytes > _MAX_TOTAL_SIZE:
+                        logger.warning("Total size limit reached during extraction")
+                        break
                     target.parent.mkdir(parents=True, exist_ok=True)
                     with tar.extractfile(member) as src:
                         if src:
@@ -82,9 +99,12 @@ def extract_npm_install_scripts(tarball_content: bytes) -> tuple[list[Path], Pat
 
 def _extract_package_json(tar: tarfile.TarFile, tmp_dir: Path) -> Path | None:
     """Extract package.json from the tarball."""
-    for member in tar.getmembers():
+    for member in tar:
         relative = _normalize_member_path(member.name)
         if relative == "package.json" and member.isfile():
+            if member.size > _MAX_FILE_SIZE:
+                logger.warning("package.json exceeds size limit: {size}", size=member.size)
+                return None
             target = tmp_dir / "package.json"
             if not _is_safe_path(tmp_dir, target):
                 continue
@@ -208,6 +228,7 @@ def extract_pypi_install_scripts(content: bytes, filename: str) -> tuple[list[Pa
 def _extract_from_zip(content: bytes, tmp_dir: Path) -> list[Path]:
     """Extract target files from a zip/whl archive."""
     extracted: list[Path] = []
+    total_bytes = 0
 
     with zipfile.ZipFile(io.BytesIO(content)) as zf:
         for info in zf.infolist():
@@ -225,6 +246,13 @@ def _extract_from_zip(content: bytes, tmp_dir: Path) -> list[Path]:
                 continue
 
             if _is_pypi_target(info.filename) or _is_pypi_target(relative):
+                if len(extracted) >= _MAX_FILE_COUNT:
+                    logger.warning("File count limit reached during zip extraction")
+                    break
+                total_bytes += info.file_size
+                if total_bytes > _MAX_TOTAL_SIZE:
+                    logger.warning("Total size limit reached during zip extraction")
+                    break
                 target = tmp_dir / relative
                 if not _is_safe_path(tmp_dir, target):
                     continue
@@ -238,9 +266,10 @@ def _extract_from_zip(content: bytes, tmp_dir: Path) -> list[Path]:
 def _extract_from_targz(content: bytes, tmp_dir: Path) -> list[Path]:
     """Extract target files from a tar.gz sdist archive."""
     extracted: list[Path] = []
+    total_bytes = 0
 
     with tarfile.open(fileobj=io.BytesIO(content), mode="r:gz") as tar:
-        for member in tar.getmembers():
+        for member in tar:
             if not member.isfile() or member.size > _MAX_FILE_SIZE:
                 continue
 
@@ -249,6 +278,13 @@ def _extract_from_targz(content: bytes, tmp_dir: Path) -> list[Path]:
                 continue
 
             if _is_pypi_target(member.name) or _is_pypi_target(relative):
+                if len(extracted) >= _MAX_FILE_COUNT:
+                    logger.warning("File count limit reached during tar extraction")
+                    break
+                total_bytes += member.size
+                if total_bytes > _MAX_TOTAL_SIZE:
+                    logger.warning("Total size limit reached during tar extraction")
+                    break
                 target = tmp_dir / relative
                 if not _is_safe_path(tmp_dir, target):
                     continue
@@ -314,10 +350,11 @@ def extract_gem_files(content: bytes, filename: str) -> tuple[list[Path], Path]:
 def _extract_gem_data(data_bytes: bytes, tmp_dir: Path) -> list[Path]:
     """Extract target files from the nested data.tar.gz inside a .gem."""
     extracted: list[Path] = []
+    total_bytes = 0
 
     try:
         with tarfile.open(fileobj=io.BytesIO(data_bytes), mode="r:gz") as tar:
-            for member in tar.getmembers():
+            for member in tar:
                 if not member.isfile() or member.size > _MAX_FILE_SIZE:
                     continue
                 if not _is_gem_target(member.name):
@@ -326,6 +363,14 @@ def _extract_gem_data(data_bytes: bytes, tmp_dir: Path) -> list[Path]:
                 relative = member.name.lstrip("./")
                 if ".." in relative:
                     continue
+
+                if len(extracted) >= _MAX_FILE_COUNT:
+                    logger.warning("File count limit reached during gem extraction")
+                    break
+                total_bytes += member.size
+                if total_bytes > _MAX_TOTAL_SIZE:
+                    logger.warning("Total size limit reached during gem extraction")
+                    break
 
                 target = tmp_dir / relative
                 if not _is_safe_path(tmp_dir, target):

@@ -9,6 +9,8 @@ import time
 from loguru import logger
 from starlette.types import ASGIApp, Receive, Scope, Send
 
+from app.api.routers.metrics import increment
+
 
 class RequestLoggingMiddleware:
     """Log all incoming requests with timing (pure ASGI, no body buffering)."""
@@ -32,6 +34,7 @@ class RequestLoggingMiddleware:
 
         await self.app(scope, receive, send_wrapper)
 
+        increment("requests_total")
         elapsed_ms = (time.monotonic() - start) * 1000
         method = scope.get("method", "?")
         path = scope.get("path", "?")

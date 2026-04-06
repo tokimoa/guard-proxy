@@ -5,7 +5,9 @@ from datetime import UTC, datetime, timedelta
 
 from loguru import logger
 from sqlalchemy import delete, select
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
+from app.api.routers.metrics import increment
 from app.core.config import Settings
 from app.db.models.scan_cache import ScanCache
 from app.db.session import Database
@@ -33,8 +35,10 @@ class CacheService:
             row = (await session.execute(stmt)).scalar_one_or_none()
 
         if row is None:
+            increment("cache_misses")
             return None
 
+        increment("cache_hits")
         logger.debug("Cache hit: {key}", key=key)
         scan_results = [ScanResult.model_validate(r) for r in json.loads(row.scan_results_json)]
         return DecisionResult(
@@ -61,23 +65,32 @@ class CacheService:
         scan_json = json.dumps([r.model_dump() for r in decision.scan_results])
 
         async with self._db.session() as session:
-            # Upsert: delete old entry if exists
-            await session.execute(delete(ScanCache).where(ScanCache.cache_key == key))
-            session.add(
-                ScanCache(
-                    cache_key=key,
-                    registry=registry,
-                    package_name=name,
-                    version=version,
-                    content_hash=content_hash,
-                    verdict=decision.verdict,
-                    final_score=decision.final_score,
-                    scan_results_json=scan_json,
-                    reason=decision.reason,
-                    created_at=now,
-                    expires_at=expires,
-                )
+            values = {
+                "cache_key": key,
+                "registry": registry,
+                "package_name": name,
+                "version": version,
+                "content_hash": content_hash,
+                "verdict": decision.verdict,
+                "final_score": decision.final_score,
+                "scan_results_json": scan_json,
+                "reason": decision.reason,
+                "created_at": now,
+                "expires_at": expires,
+            }
+            stmt = sqlite_insert(ScanCache).values(**values)
+            stmt = stmt.on_conflict_do_update(
+                index_elements=[ScanCache.cache_key],
+                set_={
+                    "verdict": stmt.excluded.verdict,
+                    "final_score": stmt.excluded.final_score,
+                    "scan_results_json": stmt.excluded.scan_results_json,
+                    "reason": stmt.excluded.reason,
+                    "created_at": stmt.excluded.created_at,
+                    "expires_at": stmt.excluded.expires_at,
+                },
             )
+            await session.execute(stmt)
             await session.commit()
         logger.debug("Cache stored: {key}", key=key)
 

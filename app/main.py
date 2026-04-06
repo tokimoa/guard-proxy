@@ -31,6 +31,7 @@ from app.db.audit_service import AuditService
 from app.db.cache_service import CacheService
 from app.db.session import Database
 from app.decision.engine import DecisionEngine
+from app.notifications import NotificationService
 from app.proxy.middleware import RequestLoggingMiddleware
 from app.proxy.npm import NpmProxy
 from app.proxy.pypi import PyPIProxy
@@ -144,13 +145,25 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
             slow.append(llm_scanner)
         return slow
 
+    # Notification service
+    notification_service = NotificationService(settings.slack_webhook_url) if settings.slack_webhook_url else None
+    if notification_service:
+        logger.info("Slack notifications enabled")
+
     # --- npm proxy (tiered pipeline) ---
     npm_registry = NpmRegistryClient(settings)
     npm_fast = _build_fast_scanners(StaticAnalysisScanner(settings))
     npm_slow = _build_slow_scanners()
     npm_pipeline = TieredScanPipeline(npm_fast, npm_slow)
     npm_proxy = NpmProxy(
-        settings, npm_registry, npm_pipeline, decision_engine, cache_service, audit_service, bg_manager
+        settings,
+        npm_registry,
+        npm_pipeline,
+        decision_engine,
+        cache_service,
+        audit_service,
+        bg_manager,
+        notification_service,
     )
 
     # --- PyPI proxy (tiered pipeline) ---
@@ -159,7 +172,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     pypi_slow = _build_slow_scanners()
     pypi_pipeline = TieredScanPipeline(pypi_fast, pypi_slow)
     pypi_proxy = PyPIProxy(
-        settings, pypi_registry, pypi_pipeline, decision_engine, cache_service, audit_service, bg_manager
+        settings,
+        pypi_registry,
+        pypi_pipeline,
+        decision_engine,
+        cache_service,
+        audit_service,
+        bg_manager,
+        notification_service,
     )
 
     # --- RubyGems proxy (tiered pipeline) ---
@@ -168,7 +188,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     rubygems_slow = _build_slow_scanners()
     rubygems_pipeline = TieredScanPipeline(rubygems_fast, rubygems_slow)
     rubygems_proxy = RubyGemsProxy(
-        settings, rubygems_registry, rubygems_pipeline, decision_engine, cache_service, audit_service, bg_manager
+        settings,
+        rubygems_registry,
+        rubygems_pipeline,
+        decision_engine,
+        cache_service,
+        audit_service,
+        bg_manager,
+        notification_service,
     )
 
     if llm_scanner:

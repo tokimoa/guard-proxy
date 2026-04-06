@@ -5,6 +5,7 @@ artifact content for known C2 domains/IPs.
 """
 
 import json
+import re
 from pathlib import Path
 
 from loguru import logger
@@ -22,9 +23,9 @@ class IOCDatabase:
         self._npm_packages: dict[str, set[str]] = {}
         self._pypi_packages: dict[str, set[str]] = {}
         self._rubygems_packages: dict[str, set[str]] = {}
-        self._c2_domains: set[str] = set()
+        self._c2_domains: list[tuple[str, re.Pattern[str]]] = []
         self._c2_domain_suffixes: list[str] = []
-        self._c2_ips: set[str] = set()
+        self._c2_ips: list[tuple[str, re.Pattern[str]]] = []
         self._malicious_hashes: set[str] = set()
         self._load()
 
@@ -48,15 +49,18 @@ class IOCDatabase:
         for entry in data.get("malicious_packages", {}).get("rubygems", []):
             self._rubygems_packages[entry["name"]] = set(entry.get("versions", []))
 
-        self._c2_domains = set(data.get("c2_domains", []))
+        self._c2_domains = [
+            (domain, re.compile(r"(?<![a-zA-Z0-9.-])" + re.escape(domain.lower()) + r"(?![a-zA-Z0-9.-])"))
+            for domain in data.get("c2_domains", [])
+        ]
         self._c2_domain_suffixes = data.get("c2_domain_suffixes", [])
-        self._c2_ips = set(data.get("c2_ips", []))
+        self._c2_ips = [(ip, re.compile(r"(?<!\d)" + re.escape(ip) + r"(?!\d)")) for ip in data.get("c2_ips", [])]
         self._malicious_hashes = set(data.get("malicious_hashes", {}).get("sha256", []))
 
-        total = len(self._npm_packages) + len(self._pypi_packages) + len(self._rubygems_packages)
+        total_pkgs = len(self._npm_packages) + len(self._pypi_packages) + len(self._rubygems_packages)
         logger.info(
             "IOC database loaded: {pkgs} packages, {domains} C2 domains, {ips} C2 IPs",
-            pkgs=total,
+            pkgs=total_pkgs,
             domains=len(self._c2_domains),
             ips=len(self._c2_ips),
         )
@@ -74,20 +78,16 @@ class IOCDatabase:
 
     def check_content_for_iocs(self, content: str) -> list[str]:
         """Scan content for known C2 domains, domain suffixes, and IPs."""
-        import re
-
         findings: list[str] = []
         content_lower = content.lower()
-        for domain in self._c2_domains:
-            # Word-boundary matching to avoid "medieval.com" matching "evil.com"
-            if re.search(r"(?<![a-zA-Z0-9.-])" + re.escape(domain.lower()) + r"(?![a-zA-Z0-9.-])", content_lower):
+        for domain, pattern in self._c2_domains:
+            if pattern.search(content_lower):
                 findings.append(f"Known C2 domain: {domain}")
         for suffix in self._c2_domain_suffixes:
             if suffix.lower() in content_lower:
                 findings.append(f"Known C2 domain suffix: *{suffix}")
-        for ip in self._c2_ips:
-            # Ensure IP is not part of a larger number
-            if re.search(r"(?<!\d)" + re.escape(ip) + r"(?!\d)", content):
+        for ip, pattern in self._c2_ips:
+            if pattern.search(content):
                 findings.append(f"Known C2 IP: {ip}")
         return findings
 

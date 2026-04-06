@@ -7,11 +7,13 @@ from urllib.parse import urlparse
 from fastapi import APIRouter, Request, Response
 from loguru import logger
 
+from app.api.routers.metrics import increment
 from app.core.config import Settings
 from app.core.exceptions import PackageBlockedError
 from app.db.audit_service import AuditService
 from app.db.cache_service import CacheService
 from app.decision.engine import DecisionEngine
+from app.notifications import NotificationService
 from app.registry.pypi_client import PyPIRegistryClient
 from app.scanners.background import BackgroundScanManager
 from app.scanners.base import ScanPipeline, TieredScanPipeline
@@ -28,6 +30,9 @@ _VERSION_PATTERN = re.compile(r"^(.+?)-(\d+\..+?)(?:-|\.tar\.gz|\.zip|\.whl)")
 class PyPIProxy:
     """PyPI transparent proxy with package interception and scanning."""
 
+    # Default PyPI file hosts — extended dynamically with upstream_url host
+    _DEFAULT_FILE_HOSTS = {"files.pythonhosted.org", "pypi.org", "pypi.io"}
+
     def __init__(
         self,
         settings: Settings,
@@ -37,6 +42,7 @@ class PyPIProxy:
         cache_service: CacheService | None = None,
         audit_service: AuditService | None = None,
         bg_manager: BackgroundScanManager | None = None,
+        notification_service: NotificationService | None = None,
     ) -> None:
         self._settings = settings
         self._registry = registry_client
@@ -45,6 +51,8 @@ class PyPIProxy:
         self._cache = cache_service
         self._audit = audit_service
         self._bg_manager = bg_manager
+        self._notifications = notification_service
+        self._files_base_url = self._derive_files_base_url()
 
     def get_router(self) -> APIRouter:
         router = APIRouter()
@@ -64,13 +72,24 @@ class PyPIProxy:
 
     async def handle_simple_root(self, request: Request) -> Response:
         """Forward the simple index root."""
-        url = f"{self._registry._upstream_url}/simple/"
         try:
-            resp = await self._registry._client.get(url)
+            resp = await self._registry.get("/simple/")
             return Response(content=resp.content, media_type=resp.headers.get("content-type", "text/html"))
         except Exception as e:
             logger.error("Failed to fetch simple index root: {err}", err=str(e))
             return Response(content="Upstream error", status_code=502)
+
+    def _derive_files_base_url(self) -> str:
+        """Derive the base URL for file downloads from upstream config.
+
+        For official PyPI (pypi.org), files are at files.pythonhosted.org.
+        For private mirrors, files are typically served from the same host.
+        """
+        upstream = self._registry.upstream_url
+        parsed = urlparse(upstream)
+        if parsed.hostname in ("pypi.org", "pypi.io"):
+            return "https://files.pythonhosted.org"
+        return upstream
 
     async def handle_simple_index(self, request: Request, package_name: str) -> Response:
         """Serve PEP 503 simple index with rewritten download URLs."""
@@ -78,7 +97,9 @@ class PyPIProxy:
 
         # Rewrite download URLs to route through this proxy
         proxy_base = f"{request.url.scheme}://{request.url.netloc}"
-        html = self._rewrite_download_urls(html, proxy_base)
+        upstream_host = urlparse(self._registry.upstream_url).hostname
+        rewrite_hosts = self._DEFAULT_FILE_HOSTS | ({upstream_host} if upstream_host else set())
+        html = self._rewrite_download_urls(html, proxy_base, rewrite_hosts)
 
         return Response(content=html, media_type="text/html")
 
@@ -88,7 +109,7 @@ class PyPIProxy:
 
         # .metadata files are just metadata — pass through without scanning
         if filename.endswith(".metadata"):
-            upstream_url = f"https://files.pythonhosted.org/packages/{file_path}"
+            upstream_url = f"{self._files_base_url}/packages/{file_path}"
             content = await self._registry.download_artifact(upstream_url)
             return Response(content=content, media_type="application/octet-stream")
 
@@ -97,7 +118,7 @@ class PyPIProxy:
         logger.info("PyPI download: {pkg}@{ver} ({file})", pkg=pkg_name, ver=version, file=filename)
 
         # Download from upstream
-        upstream_url = f"https://files.pythonhosted.org/packages/{file_path}"
+        upstream_url = f"{self._files_base_url}/packages/{file_path}"
         content = await self._registry.download_artifact(upstream_url)
 
         # Check cache
@@ -184,8 +205,16 @@ class PyPIProxy:
             tag=deferred_tag,
         )
 
+        # Metrics
+        increment("scans_total")
+        increment(f"scan_{decision.verdict}")
+
         if self._audit:
             await self._audit.log_decision("pypi", pkg_name, version, decision, request_path)
+
+        # Notifications
+        if self._notifications:
+            await self._notifications.notify_decision("pypi", pkg_name, version, decision)
 
         if decision.verdict == "deny" and decision.mode == "enforce":
             raise PackageBlockedError(package_name=pkg_name, version=version, reason=decision.reason)
@@ -205,15 +234,13 @@ class PyPIProxy:
         )
 
     @staticmethod
-    def _rewrite_download_urls(html: str, proxy_base: str) -> str:
+    def _rewrite_download_urls(html: str, proxy_base: str, rewrite_hosts: set[str]) -> str:
         """Rewrite absolute PyPI download URLs in simple index HTML."""
 
         def _rewrite(match: re.Match) -> str:
             url = match.group(1)
             parsed = urlparse(url)
-            if parsed.scheme and "pypi.org" in parsed.netloc:
-                return f'href="{proxy_base}{parsed.path}"'
-            if parsed.scheme and "files.pythonhosted.org" in parsed.netloc:
+            if parsed.scheme and parsed.hostname in rewrite_hosts:
                 return f'href="{proxy_base}{parsed.path}"'
             return match.group(0)
 
