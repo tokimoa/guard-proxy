@@ -16,8 +16,34 @@ from app.schemas.package import PackageInfo
 from app.schemas.scan import ScanResult
 
 # Dangerous function calls to track reachability for
-_PY_DANGEROUS = {"eval", "exec", "compile", "__import__", "os.system", "subprocess.run", "subprocess.Popen"}
-_JS_DANGEROUS = {"eval", "Function", "child_process.exec", "child_process.spawn"}
+_PY_DANGEROUS = {
+    "eval",
+    "exec",
+    "compile",
+    "__import__",
+    "os.system",
+    "os.popen",
+    "subprocess.run",
+    "subprocess.Popen",
+    "subprocess.call",
+    "subprocess.check_output",
+    "pickle.loads",
+    "pickle.load",
+    "yaml.unsafe_load",
+    "marshal.loads",
+    "importlib.import_module",
+    "ctypes.CDLL",
+}
+_JS_DANGEROUS = {
+    "eval",
+    "Function",
+    "child_process.exec",
+    "child_process.spawn",
+    "child_process.execSync",
+    "child_process.fork",
+    "vm.runInNewContext",
+    "vm.runInThisContext",
+}
 
 
 class FunctionNode(BaseModel):

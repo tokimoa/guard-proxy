@@ -27,7 +27,7 @@ CREDENTIAL_ACCESS_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="ssh_key_access",
         pattern=re.compile(
-            r"""(?:readFile(?:Sync)?|readdir(?:Sync)?|access(?:Sync)?|open(?:Sync)?).{0,500}['"~].{0,500}\.ssh""",
+            r"""(?:readFile(?:Sync)?|readdir(?:Sync)?|access(?:Sync)?|open(?:Sync)?).{0,200}['"~].{0,200}\.ssh""",
             re.IGNORECASE,
         ),
         severity="critical",
@@ -36,7 +36,7 @@ CREDENTIAL_ACCESS_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="aws_credential_access",
         pattern=re.compile(
-            r"""(?:readFile(?:Sync)?|readdir(?:Sync)?|access(?:Sync)?).{0,500}['"~].{0,500}\.aws""", re.IGNORECASE
+            r"""(?:readFile(?:Sync)?|readdir(?:Sync)?|access(?:Sync)?).{0,200}['"~].{0,200}\.aws""", re.IGNORECASE
         ),
         severity="critical",
         description="AWS credential file access",
@@ -44,7 +44,7 @@ CREDENTIAL_ACCESS_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="credential_file_access",
         pattern=re.compile(
-            r"""(?:readFile(?:Sync)?|readdir(?:Sync)?|access(?:Sync)?).{0,500}['"].{0,500}(?:\.gnupg|\.npmrc|\.docker|\.kube|\.config/gcloud)""",
+            r"""(?:readFile(?:Sync)?|readdir(?:Sync)?|access(?:Sync)?).{0,200}['"].{0,200}(?:\.gnupg|\.npmrc|\.docker|\.kube|\.config/gcloud)""",
             re.IGNORECASE,
         ),
         severity="high",
@@ -52,7 +52,7 @@ CREDENTIAL_ACCESS_PATTERNS: list[MaliciousPattern] = [
     ),
     MaliciousPattern(
         name="homedir_traversal",
-        pattern=re.compile(r"os\.homedir\(\).{0,500}(?:readdir|readdirSync|readFile)", re.IGNORECASE),
+        pattern=re.compile(r"os\.homedir\(\).{0,200}(?:readdir|readdirSync|readFile)", re.IGNORECASE),
         severity="high",
         description="Home directory traversal",
     ),
@@ -72,14 +72,14 @@ NETWORK_EXFIL_PATTERNS: list[MaliciousPattern] = [
     ),
     MaliciousPattern(
         name="dns_exfil",
-        pattern=re.compile(r"dns\.resolve|dns\.lookup.{0,500}(?:process\.env|Buffer\.from)", re.IGNORECASE),
+        pattern=re.compile(r"dns\.resolve|dns\.lookup.{0,200}(?:process\.env|Buffer\.from)", re.IGNORECASE),
         severity="high",
         description="Potential DNS exfiltration",
     ),
     MaliciousPattern(
         name="data_exfil_http",
         pattern=re.compile(
-            r"(?:https?\.(?:get|request|post)|fetch|axios|got)\s*\(.{0,500}(?:process\.env|readFile|Buffer\.from)",
+            r"(?:https?\.(?:get|request|post)|fetch|axios|got)\s*\(.{0,200}(?:process\.env|readFile|Buffer\.from)",
             re.IGNORECASE | re.DOTALL,
         ),
         severity="critical",
@@ -88,7 +88,7 @@ NETWORK_EXFIL_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="webhook_exfil",
         pattern=re.compile(
-            r"""https?://(?:hooks\.slack\.com|discord(?:app)?\.com/api/webhooks|.{0,500}webhook)""",
+            r"""https?://(?:hooks\.slack\.com|discord(?:app)?\.com/api/webhooks|.{0,200}webhook)""",
             re.IGNORECASE,
         ),
         severity="medium",
@@ -102,7 +102,7 @@ OBFUSCATION_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="base64_eval",
         pattern=re.compile(
-            r"""(?:(?:Buffer\.from|atob)\s*\(.{0,500}(?:eval|Function|exec))|(?:(?:eval|Function|exec)\s*\(.{0,500}(?:Buffer\.from|atob))""",
+            r"""(?:(?:Buffer\.from|atob)\s*\(.{0,200}(?:eval|Function|exec))|(?:(?:eval|Function|exec)\s*\(.{0,200}(?:Buffer\.from|atob))""",
             re.IGNORECASE | re.DOTALL,
         ),
         severity="critical",
@@ -132,6 +132,18 @@ OBFUSCATION_PATTERNS: list[MaliciousPattern] = [
         severity="high",
         description="Character code obfuscation",
     ),
+    MaliciousPattern(
+        name="require_concat",
+        pattern=re.compile(r"""require\s*\(\s*[^'")\s]+\s*\+"""),
+        severity="high",
+        description="Dynamic require() with string concatenation",
+    ),
+    MaliciousPattern(
+        name="process_binding",
+        pattern=re.compile(r"process\.binding\s*\(", re.IGNORECASE),
+        severity="high",
+        description="process.binding() — low-level Node.js API access",
+    ),
 ]
 
 # -- Persistence patterns --
@@ -158,7 +170,7 @@ PERSISTENCE_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="shell_profile_write",
         pattern=re.compile(
-            r"""(?:writeFile|appendFile).{0,500}(?:\.bashrc|\.zshrc|\.profile|\.bash_profile)""",
+            r"""(?:writeFile|appendFile).{0,200}(?:\.bashrc|\.zshrc|\.profile|\.bash_profile)""",
             re.IGNORECASE,
         ),
         severity="high",
@@ -172,7 +184,7 @@ ADVANCED_THREAT_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="reverse_shell",
         pattern=re.compile(
-            r"(?:net\.Socket|child_process).{0,500}(?:connect|spawn).{0,500}(?:\d{1,3}\.){3}\d{1,3}",
+            r"(?:net\.Socket|child_process).{0,200}(?:connect|spawn).{0,200}(?:\d{1,3}\.){3}\d{1,3}",
             re.IGNORECASE | re.DOTALL,
         ),
         severity="critical",
@@ -229,7 +241,7 @@ ADVANCED_THREAT_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="deserialize_unsafe",
         pattern=re.compile(
-            r"(?:node-serialize|serialize-javascript).{0,500}(?:unserialize|deserialize)", re.IGNORECASE
+            r"(?:node-serialize|serialize-javascript).{0,200}(?:unserialize|deserialize)", re.IGNORECASE
         ),
         severity="critical",
         description="Unsafe deserialization (RCE risk)",
@@ -237,7 +249,7 @@ ADVANCED_THREAT_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="wasm_exec",
         pattern=re.compile(
-            r"WebAssembly\.(?:instantiate|compile).{0,500}(?:fetch|readFile)", re.IGNORECASE | re.DOTALL
+            r"WebAssembly\.(?:instantiate|compile).{0,200}(?:fetch|readFile)", re.IGNORECASE | re.DOTALL
         ),
         severity="medium",
         description="WebAssembly loaded from external source",
@@ -254,7 +266,7 @@ ADVANCED_THREAT_PATTERNS: list[MaliciousPattern] = [
     MaliciousPattern(
         name="date_killswitch",
         pattern=re.compile(
-            r"new\s+Date\s*\(\s*['\"]20\d{2}.{0,500}(?:process\.exit|exec|eval|child_process)",
+            r"new\s+Date\s*\(\s*['\"]20\d{2}.{0,200}(?:process\.exit|exec|eval|child_process)",
             re.IGNORECASE | re.DOTALL,
         ),
         severity="high",
@@ -262,14 +274,14 @@ ADVANCED_THREAT_PATTERNS: list[MaliciousPattern] = [
     ),
     MaliciousPattern(
         name="git_hook_write",
-        pattern=re.compile(r"(?:writeFile|appendFile|open).{0,500}\.git/hooks", re.IGNORECASE),
+        pattern=re.compile(r"(?:writeFile|appendFile|open).{0,200}\.git/hooks", re.IGNORECASE),
         severity="critical",
         description="Git hook injection (persistence)",
     ),
     MaliciousPattern(
         name="charcode_function",
         pattern=re.compile(
-            r"String\.fromCharCode.{0,500}(?:Function|eval)|(?:Function|eval).{0,500}String\.fromCharCode",
+            r"String\.fromCharCode.{0,200}(?:Function|eval)|(?:Function|eval).{0,200}String\.fromCharCode",
             re.IGNORECASE | re.DOTALL,
         ),
         severity="critical",
@@ -292,13 +304,13 @@ ADVANCED_THREAT_PATTERNS: list[MaliciousPattern] = [
     ),
     MaliciousPattern(
         name="anti_forensics",
-        pattern=re.compile(r"(?:unlinkSync|rmSync|unlink)\s*\(.{0,500}(?:setup|install|hook)", re.IGNORECASE),
+        pattern=re.compile(r"(?:unlinkSync|rmSync|unlink)\s*\(.{0,200}(?:setup|install|hook)", re.IGNORECASE),
         severity="high",
         description="Anti-forensics: self-deleting install script",
     ),
     MaliciousPattern(
         name="dll_hijacking",
-        pattern=re.compile(r"(?:writeFile|write).{0,500}(?:System32|SysWOW64|Windows).{0,500}\.dll", re.IGNORECASE),
+        pattern=re.compile(r"(?:writeFile|write).{0,200}(?:System32|SysWOW64|Windows).{0,200}\.dll", re.IGNORECASE),
         severity="critical",
         description="DLL hijacking (writing to Windows system directories)",
     ),
@@ -319,19 +331,19 @@ ADVANCED_THREAT_PATTERNS: list[MaliciousPattern] = [
     ),
     MaliciousPattern(
         name="procfs_access",
-        pattern=re.compile(r"/proc/.{0,500}(?:mem|maps|environ|cmdline)", re.IGNORECASE),
+        pattern=re.compile(r"/proc/.{0,200}(?:mem|maps|environ|cmdline)", re.IGNORECASE),
         severity="critical",
         description="Process memory/environment access via /proc (credential scanning)",
     ),
     MaliciousPattern(
         name="system_binary_write",
-        pattern=re.compile(r"(?:writeFile|open|write).{0,500}(?:/usr/local/bin|/usr/bin|/bin/)", re.IGNORECASE),
+        pattern=re.compile(r"(?:writeFile|open|write).{0,200}(?:/usr/local/bin|/usr/bin|/bin/)", re.IGNORECASE),
         severity="critical",
         description="System binary path write (PATH hijack)",
     ),
     MaliciousPattern(
         name="shell_command_injection",
-        pattern=re.compile(r"""\$\(.{0,500}(?:curl|wget|bash|sh\b|nc\b)""", re.IGNORECASE),
+        pattern=re.compile(r"""\$\(.{0,200}(?:curl|wget|bash|sh\b|nc\b)""", re.IGNORECASE),
         severity="high",
         description="Shell command substitution with network/exec command",
     ),
@@ -343,13 +355,13 @@ ADVANCED_THREAT_PATTERNS: list[MaliciousPattern] = [
     ),
     MaliciousPattern(
         name="private_key_access",
-        pattern=re.compile(r"""(?:readFile|readdir|access).{0,500}\.(?:pem|key|p12|pfx|jks)""", re.IGNORECASE),
+        pattern=re.compile(r"""(?:readFile|readdir|access).{0,200}\.(?:pem|key|p12|pfx|jks)""", re.IGNORECASE),
         severity="high",
         description="Private key/certificate file access",
     ),
     MaliciousPattern(
         name="env_reflection",
-        pattern=re.compile(r"process\.env\[.{0,500}process\.env|process\.env\[.{0,500}\+", re.IGNORECASE),
+        pattern=re.compile(r"process\.env\[.{0,200}process\.env|process\.env\[.{0,200}\+", re.IGNORECASE),
         severity="high",
         description="Environment variable reflection/computed access",
     ),
