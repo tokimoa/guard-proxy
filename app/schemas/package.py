@@ -26,7 +26,7 @@ class PackageInfo(BaseModel):
 
     name: str
     version: str
-    registry: Literal["npm", "pypi", "rubygems", "go"] = "npm"
+    registry: Literal["npm", "pypi", "rubygems", "go", "cargo"] = "npm"
     publish_date: datetime | None = None
     install_scripts: dict[str, str] = Field(default_factory=dict)
     metadata: dict[str, Any] = Field(default_factory=dict)

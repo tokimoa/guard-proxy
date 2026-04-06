@@ -24,6 +24,8 @@ def detect_install_hooks(
         return _detect_rubygems_hooks(artifacts)
     if registry == "go":
         return _detect_go_hooks(artifacts)
+    if registry == "cargo":
+        return _detect_cargo_hooks(artifacts)
     return False
 
 
@@ -77,3 +79,8 @@ def _detect_go_hooks(artifacts: list[Path]) -> bool:
             except OSError:
                 continue
     return False
+
+
+def _detect_cargo_hooks(artifacts: list[Path]) -> bool:
+    """Cargo: check if build.rs exists (runs at compile time)."""
+    return any(a.name == "build.rs" for a in artifacts)
