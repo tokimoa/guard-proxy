@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-04-07
+
+### Added
+
+- **Reachability analysis scanner** — call graph traversal to determine if suspicious code is reachable from entry points
+  - Python: builds intra-file call graph from AST, identifies entry points (`__init__`, `main`, module-level code, decorated functions)
+  - JavaScript: tracks function declarations, `exports.*` assignments, module-level code
+  - Reachable dangerous code → `warn` with boosted confidence
+  - Unreachable dangerous code → `pass` (dead code, reduced threat)
+  - Propagates reachability through call chains (A → B → C)
+- New config option: `REACHABILITY_ENABLED` (default: true)
+- 16 new tests (Python reachability, JS reachability, mixed files)
+
 ## [2.4.0] - 2026-04-07
 
 ### Added
