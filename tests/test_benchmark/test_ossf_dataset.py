@@ -101,10 +101,7 @@ async def _batch_query_osv(ecosystem: str, package_names: list[str]) -> dict[str
     }
     osv_eco = osv_ecosystem_map.get(ecosystem, ecosystem)
 
-    queries = [
-        {"package": {"name": name, "ecosystem": osv_eco}}
-        for name in package_names
-    ]
+    queries = [{"package": {"name": name, "ecosystem": osv_eco}} for name in package_names]
 
     results: dict[str, list[str]] = {}
     # osv.dev batch endpoint accepts up to 1000 queries
@@ -146,6 +143,7 @@ async def test_ossf_npm_cross_reference():
 
     # Sample 200 packages from our IOC DB to check against osv.dev
     import random
+
     random.seed(42)
     sample = random.sample(ioc_npm, min(200, len(ioc_npm)))
 
@@ -158,14 +156,14 @@ async def test_ossf_npm_cross_reference():
     total = len(sample)
     confirmation_rate = confirmed / total * 100 if total else 0
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"OSSF npm Cross-Reference (sample of {total})")
     print(f"  IOC DB total:      {len(ioc_npm):,} npm packages")
     print(f"  Sample checked:    {total}")
     print(f"  Confirmed in OSSF: {confirmed} ({confirmation_rate:.1f}%)")
     print("  Note: Not all DataDog entries have OSSF MAL advisories")
     print("        (DataDog dataset predates OSSF in some cases)")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # At least some should be confirmed — proves the datasets overlap
     assert confirmed >= 10, f"Only {confirmed} packages confirmed in OSSF — expected more overlap"
@@ -181,6 +179,7 @@ async def test_ossf_pypi_cross_reference():
         pytest.skip("Not enough pypi entries in IOC DB")
 
     import random
+
     random.seed(42)
     sample = random.sample(ioc_pypi, min(200, len(ioc_pypi)))
 
@@ -193,12 +192,12 @@ async def test_ossf_pypi_cross_reference():
     total = len(sample)
     confirmation_rate = confirmed / total * 100 if total else 0
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"OSSF PyPI Cross-Reference (sample of {total})")
     print(f"  IOC DB total:      {len(ioc_pypi):,} pypi packages")
     print(f"  Sample checked:    {total}")
     print(f"  Confirmed in OSSF: {confirmed} ({confirmation_rate:.1f}%)")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     assert confirmed >= 5, f"Only {confirmed} packages confirmed in OSSF"
 
@@ -240,12 +239,12 @@ async def test_ossf_specific_known_malware():
             except Exception:
                 pass
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Known Malware Cross-Check")
     print(f"  Total checked:    {total}")
     print(f"  In IOC DB:        {ioc_found}/{total}")
     print(f"  In OSSF/osv.dev:  {osv_found}/{total}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Some of these predate our IOC DB (focused on 2022+ attacks)
     # At least some should be present in either database

