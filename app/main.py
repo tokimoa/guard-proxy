@@ -9,6 +9,7 @@ from loguru import logger
 from app.api.routers.audit import router as audit_router
 from app.api.routers.cache import router as cache_router
 from app.api.routers.config import router as config_router
+from app.api.routers.dashboard import router as dashboard_router
 from app.api.routers.health import router as health_router
 from app.api.routers.metrics import router as metrics_router
 from app.api.routers.sbom import router as sbom_router
@@ -216,6 +217,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
     # Mount routers — admin first, then proxies
     app.include_router(health_router)
+    app.include_router(dashboard_router)
     app.include_router(metrics_router)
     app.include_router(sbom_router)
     app.include_router(cache_router)

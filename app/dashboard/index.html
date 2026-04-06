@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guard Proxy Dashboard</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3a;
+      --text: #e1e4ed; --muted: #8b8fa3;
+      --green: #22c55e; --yellow: #eab308; --red: #ef4444; --blue: #3b82f6;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; background: var(--bg); color: var(--text); }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+    header h1 { font-size: 20px; font-weight: 600; }
+    .badge { font-size: 12px; padding: 4px 10px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }
+    .badge.ok { color: var(--green); border-color: var(--green); }
+    .badge.error { color: var(--red); border-color: var(--red); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .card .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .card .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+    .card .value.green { color: var(--green); }
+    .card .value.yellow { color: var(--yellow); }
+    .card .value.red { color: var(--red); }
+
+    .section { margin-bottom: 32px; }
+    .section h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+    th, td { padding: 10px 16px; text-align: left; font-size: 13px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+    tr:last-child td { border-bottom: none; }
+
+    .verdict { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .verdict.allow { background: rgba(34,197,94,0.15); color: var(--green); }
+    .verdict.quarantine { background: rgba(234,179,8,0.15); color: var(--yellow); }
+    .verdict.deny { background: rgba(239,68,68,0.15); color: var(--red); }
+
+    .registry { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; background: rgba(59,130,246,0.15); color: var(--blue); }
+    .score { font-family: monospace; }
+    .refresh-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+    .refresh-btn:hover { background: var(--border); }
+    .loading { color: var(--muted); font-style: italic; padding: 20px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container" x-data="dashboard()" x-init="init()">
+
+    <header>
+      <h1>Guard Proxy Dashboard</h1>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <span class="badge" :class="health.status === 'ok' ? 'ok' : 'error'" x-text="health.status === 'ok' ? 'v' + health.version + ' online' : 'offline'"></span>
+        <button class="refresh-btn" @click="refresh()">Refresh</button>
+      </div>
+    </header>
+
+    <!-- Metrics Cards -->
+    <div class="grid">
+      <div class="card">
+        <div class="label">Total Requests</div>
+        <div class="value" x-text="metrics.requests_total"></div>
+      </div>
+      <div class="card">
+        <div class="label">Total Scans</div>
+        <div class="value" x-text="metrics.scans_total"></div>
+      </div>
+      <div class="card">
+        <div class="label">Allowed</div>
+        <div class="value green" x-text="metrics.scan_allow"></div>
+      </div>
+      <div class="card">
+        <div class="label">Quarantined</div>
+        <div class="value yellow" x-text="metrics.scan_quarantine"></div>
+      </div>
+      <div class="card">
+        <div class="label">Denied</div>
+        <div class="value red" x-text="metrics.scan_deny"></div>
+      </div>
+      <div class="card">
+        <div class="label">Cache Hit Rate</div>
+        <div class="value" x-text="cacheHitRate"></div>
+      </div>
+    </div>
+
+    <!-- Cache Stats -->
+    <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="card">
+        <div class="label">Cache Total</div>
+        <div class="value" x-text="cache.total_entries"></div>
+      </div>
+      <div class="card">
+        <div class="label">Cache Active</div>
+        <div class="value green" x-text="cache.active_entries"></div>
+      </div>
+      <div class="card">
+        <div class="label">Cache Expired</div>
+        <div class="value" style="color: var(--muted);" x-text="cache.expired_entries"></div>
+      </div>
+    </div>
+
+    <!-- Audit Log -->
+    <div class="section">
+      <h2>Recent Scan History</h2>
+      <template x-if="audit.length === 0">
+        <div class="loading">No scan history yet</div>
+      </template>
+      <template x-if="audit.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Registry</th>
+              <th>Package</th>
+              <th>Version</th>
+              <th>Verdict</th>
+              <th>Score</th>
+              <th>Mode</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="entry in audit" :key="entry.timestamp + entry.package">
+              <tr>
+                <td x-text="formatTime(entry.timestamp)"></td>
+                <td><span class="registry" x-text="entry.registry"></span></td>
+                <td x-text="entry.package"></td>
+                <td x-text="entry.version"></td>
+                <td><span class="verdict" :class="entry.action" x-text="entry.action"></span></td>
+                <td class="score" x-text="Number(entry.score).toFixed(4)"></td>
+                <td x-text="entry.mode"></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </template>
+    </div>
+
+  </div>
+
+  <script>
+    function dashboard() {
+      return {
+        health: { status: 'loading', version: '' },
+        metrics: { requests_total: 0, scans_total: 0, scan_allow: 0, scan_quarantine: 0, scan_deny: 0, cache_hits: 0, cache_misses: 0 },
+        cache: { total_entries: 0, active_entries: 0, expired_entries: 0 },
+        audit: [],
+
+        get cacheHitRate() {
+          const total = this.metrics.cache_hits + this.metrics.cache_misses;
+          if (total === 0) return '—';
+          return ((this.metrics.cache_hits / total) * 100).toFixed(1) + '%';
+        },
+
+        async init() {
+          await this.refresh();
+          setInterval(() => this.refresh(), 30000);
+        },
+
+        async refresh() {
+          try {
+            const [healthRes, metricsRes, cacheRes, auditRes] = await Promise.all([
+              fetch('/health'),
+              fetch('/metrics'),
+              fetch('/cache'),
+              fetch('/audit?limit=100'),
+            ]);
+            this.health = await healthRes.json();
+            this.metrics = this.parsePrometheus(await metricsRes.text());
+            this.cache = await cacheRes.json();
+            this.audit = await auditRes.json();
+          } catch (e) {
+            this.health = { status: 'error', version: '' };
+          }
+        },
+
+        parsePrometheus(text) {
+          const m = { requests_total: 0, scans_total: 0, scan_allow: 0, scan_quarantine: 0, scan_deny: 0, cache_hits: 0, cache_misses: 0 };
+          for (const line of text.split('\n')) {
+            if (line.startsWith('#') || !line.trim()) continue;
+            const match = line.match(/^(\S+?)(?:\{[^}]*\})?\s+(\d+)/);
+            if (!match) continue;
+            const [, key, val] = match;
+            if (key === 'guard_proxy_requests_total') m.requests_total = parseInt(val);
+            if (key === 'guard_proxy_scans_total') m.scans_total = parseInt(val);
+            if (line.includes('verdict="allow"')) m.scan_allow = parseInt(val);
+            if (line.includes('verdict="quarantine"')) m.scan_quarantine = parseInt(val);
+            if (line.includes('verdict="deny"')) m.scan_deny = parseInt(val);
+            if (line.includes('result="hit"')) m.cache_hits = parseInt(val);
+            if (line.includes('result="miss"')) m.cache_misses = parseInt(val);
+          }
+          return m;
+        },
+
+        formatTime(iso) {
+          const d = new Date(iso);
+          return d.toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+      };
+    }
+  </script>
+</body>
+</html>
