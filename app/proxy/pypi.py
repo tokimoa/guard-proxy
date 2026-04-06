@@ -147,6 +147,8 @@ class PyPIProxy:
                     "author_email": info.get("author_email", ""),
                     "maintainer": info.get("maintainer", ""),
                     "requires_dist": info.get("requires_dist") or [],
+                    "license": info.get("license_expression") or info.get("license", ""),
+                    "classifiers": info.get("classifiers") or [],
                 }
             except Exception:
                 logger.warning(

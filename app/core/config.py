@@ -122,6 +122,13 @@ class Settings(BaseSettings):
     dependency_check_enabled: bool = True
     depsdev_timeout: float = 2.0
 
+    # License compliance
+    license_check_enabled: bool = False
+    license_denied_list: list[str] = []
+    license_allowed_list: list[str] = []
+    license_check_action: Literal["warn", "deny"] = "warn"
+    license_copyleft_action: Literal["allow", "warn", "deny"] = "allow"
+
 
 @lru_cache
 def get_settings() -> Settings:

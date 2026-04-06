@@ -135,7 +135,11 @@ class RubyGemsProxy:
                 versions = await self._registry.get_gem_versions(gem_name)
                 publish_date = RubyGemsRegistryClient.extract_publish_date(versions, version)
                 gem_info = await self._registry.get_gem_metadata(gem_name)
-                scan_metadata = {"authors": gem_info.get("authors", "")}
+                licenses = gem_info.get("licenses") or []
+                scan_metadata = {
+                    "authors": gem_info.get("authors", ""),
+                    "license": " OR ".join(licenses) if licenses else "",
+                }
             except Exception:
                 logger.warning(
                     "Could not fetch metadata for {gem}@{ver}, proceeding with scan",

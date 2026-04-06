@@ -149,7 +149,7 @@ class NpmProxy:
                     install_scripts = install_scripts or parse_install_scripts(art)
                     break
 
-            # Enrich metadata for maintainer/dependency scanners
+            # Enrich metadata for maintainer/dependency/license scanners
             scan_metadata: dict = {}
             if version_meta:
                 scan_metadata = {
@@ -157,6 +157,7 @@ class NpmProxy:
                     "dependencies": version_meta.dependencies,
                     "_npmUser": version_meta.npm_user,
                     "version_times": version_meta.version_times,
+                    "license": version_meta.license,
                 }
 
             package_info = PackageInfo(

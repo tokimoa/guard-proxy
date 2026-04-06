@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-04-07
+
+### Added
+
+- **License compliance scanner** — configurable license policy enforcement
+  - `LicenseScanner` checks packages against denied/allowed license lists
+  - SPDX expression parsing (OR/AND/WITH operators)
+  - Copyleft detection with configurable action (allow/warn/deny)
+  - License normalization with 30+ common aliases → SPDX mapping
+  - License extraction from all 5 registries: npm (`license`), PyPI (`license_expression` + classifiers), RubyGems (`licenses`), Cargo (`license`), Go (LICENSE file heuristic)
+  - CycloneDX SBOM now includes `licenses` section
+  - PURL ecosystem mapping extended for Go (`golang`) and Cargo (`cargo`)
+- New config options: `LICENSE_CHECK_ENABLED`, `LICENSE_DENIED_LIST`, `LICENSE_ALLOWED_LIST`, `LICENSE_CHECK_ACTION`, `LICENSE_COPYLEFT_ACTION`
+- 27 new tests (scanner + normalization + extraction)
+
 ## [2.2.0] - 2026-04-07
 
 ### Added

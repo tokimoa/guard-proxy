@@ -12,7 +12,7 @@ from app.schemas.decision import DecisionResult
 from app.schemas.package import PackageInfo
 
 # PURL ecosystem mapping
-_PURL_ECOSYSTEM = {"npm": "npm", "pypi": "pypi", "rubygems": "gem"}
+_PURL_ECOSYSTEM = {"npm": "npm", "pypi": "pypi", "rubygems": "gem", "go": "golang", "cargo": "cargo"}
 
 
 def generate_sbom(
@@ -37,6 +37,11 @@ def generate_sbom(
 
     if content_hash:
         component["hashes"] = [{"alg": "SHA-256", "content": content_hash}]
+
+    # Add license info from scan results
+    license_info = _extract_license_from_decision(decision)
+    if license_info:
+        component["licenses"] = [{"license": {"name": lic}} for lic in license_info]
 
     # Add Guard Proxy scan properties
     properties = [
@@ -86,6 +91,14 @@ def sbom_to_json(sbom: dict, pretty: bool = True) -> str:
     if pretty:
         return json.dumps(sbom, indent=2, ensure_ascii=False)
     return json.dumps(sbom, separators=(",", ":"), ensure_ascii=False)
+
+
+def _extract_license_from_decision(decision: DecisionResult) -> list[str]:
+    """Extract normalized license list from scanner results."""
+    for sr in decision.scan_results:
+        if sr.scanner_name == "license_check":
+            return sr.metadata.get("normalized", [])
+    return []
 
 
 def _generate_uuid() -> str:
