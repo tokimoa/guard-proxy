@@ -1,0 +1,36 @@
+{
+  "name": "Guard Proxy",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers-extra/features/uv:1": {}
+  },
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "forwardPorts": [4873, 4874, 4875, 4876, 8100],
+  "portsAttributes": {
+    "4873": { "label": "npm proxy" },
+    "4874": { "label": "PyPI proxy" },
+    "4875": { "label": "RubyGems proxy" },
+    "4876": { "label": "Go proxy" },
+    "8100": { "label": "Admin API" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "tamasfe.even-better-toml"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": ".venv/bin/python",
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true
+        }
+      }
+    }
+  },
+  "containerEnv": {
+    "GUARD_PROXY_DEV": "1"
+  }
+}
