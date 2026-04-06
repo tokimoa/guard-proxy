@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-04-07
+
+Major release: 4th registry (Go modules), Dashboard UI, DevContainer.
+
+### Added
+
+- **Go module proxy** — full GOPROXY protocol support
+  - `GoRegistryClient` with module path case-encoding
+  - `GoProxy` with `.zip` interception and scanning, metadata pass-through
+  - 22 Go-specific detection patterns (exec.Command, CGo, go:generate, go:linkname, cloud metadata, webhook exfiltration, go.mod replace, etc.)
+  - `GoStaticAnalysisScanner` with init() context awareness
+  - `extract_go_module_zip()` for .go, .c, .h, .s, go.mod extraction
+  - Go install hook detection (init() function presence)
+  - Default port 4876, upstream proxy.golang.org
+- **Dashboard UI** — lightweight web dashboard at `/dashboard` (admin port 8100)
+  - Real-time metrics (requests, scans, allow/quarantine/deny)
+  - Cache statistics with hit rate
+  - Audit log table with verdict badges
+  - Alpine.js + vanilla CSS, no build step, 30-second auto-refresh
+- **DevContainer** — one-click setup for VS Code / GitHub Codespaces
+  - Python 3.12 + uv + Docker-in-Docker
+  - Auto-configures npm, pip, gem, go to route through guard-proxy
+  - All ports forwarded, VS Code extensions pre-installed
+- **Go detection benchmark** — 10 attack patterns (100% detection), 20 popular packages (0% FP)
+
+### Changed
+
+- `PackageInfo.registry` and `ScanRequest.registry` extended with `"go"` (breaking schema change)
+
+### Detection Benchmarks (all registries)
+
+| Benchmark | Source | Detected | Rate |
+|---|---|---|---|
+| GuardDog rules (28 rules) | [DataDog](https://github.com/DataDog/guarddog) | 28/28 | **100%** |
+| BKC attack taxonomy (12 categories) | [Springer/Uni Bonn](https://arxiv.org/abs/2005.09535) | 12/12 | **100%** |
+| Real-world incidents 2024-2026 (23 CVEs) | Documented CVEs | 23/23 | **100%** |
+| Go attack vectors (10 patterns) | Known attack vectors | 10/10 | **100%** |
+| False positives (114 packages across 4 registries) | npm/PyPI/RubyGems/Go | 0 | **0%** |
+
+> Note: npm/PyPI benchmarks are validated against public third-party datasets (GuardDog, BKC). Go benchmarks are based on known attack vectors (exec.Command in init, CGo abuse, go:generate, etc.) as no standardized Go-specific supply chain benchmark exists yet.
+
 ## [1.2.0] - 2026-04-07
 
 ### Added
@@ -125,6 +166,7 @@ Security hardening and feature improvements from code review.
 | Real-world incidents 2024–2026 (23 CVEs) | 23/23 | 100% |
 | False positives (100 popular packages) | 0 | 0% |
 
+[2.0.0]: https://github.com/tokimoa/guard-proxy/compare/v1.2.0...v2.0.0
 [1.2.0]: https://github.com/tokimoa/guard-proxy/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/tokimoa/guard-proxy/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/tokimoa/guard-proxy/compare/v0.3.0...v1.0.0
