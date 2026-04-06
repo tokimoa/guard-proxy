@@ -26,7 +26,11 @@ All settings are managed via environment variables or a `.env` file.
 | `RUBYGEMS_UPSTREAM_URL` | str | `https://rubygems.org` | RubyGems upstream registry URL |
 | `GO_PROXY_PORT` | int | `4876` | Go module proxy listening port |
 | `GO_UPSTREAM_URL` | str | `https://proxy.golang.org` | Go module upstream proxy URL |
+| `CARGO_PROXY_PORT` | int | `4877` | Cargo proxy listening port |
+| `CARGO_UPSTREAM_URL` | str | `https://crates.io` | Cargo upstream registry URL |
 | `ADMIN_API_PORT` | int | `8100` | Admin API listening port |
+
+> **Single-Port Routing (v2.5):** Guard Proxy can also serve all registries on a single port using path prefixes: `/npm/`, `/pypi/`, `/gems/`, `/go/`, `/cargo/`. Configure a single `ADMIN_API_PORT` and route clients to `http://localhost:8100/<prefix>/`.
 
 ## Cooldown Gate Settings
 
@@ -41,6 +45,29 @@ All settings are managed via environment variables or a `.env` file.
 |---|---|---|---|
 | `STATIC_ANALYSIS_ENABLED` | bool | `true` | Enable/disable static analysis |
 | `STATIC_ANALYSIS_SEVERITY_THRESHOLD` | str | `medium` | Minimum severity to report (`low` / `medium` / `high` / `critical`) |
+
+## License Compliance Settings
+
+| Environment Variable | Type | Default | Description |
+|---|---|---|---|
+| `LICENSE_CHECK_ENABLED` | bool | `false` | Enable/disable license compliance checking |
+| `LICENSE_DENIED_LIST` | list | `[]` | List of denied SPDX license identifiers (e.g., `["GPL-3.0", "AGPL-3.0"]`) |
+| `LICENSE_ALLOWED_LIST` | list | `[]` | List of explicitly allowed SPDX license identifiers (empty = allow all not denied) |
+| `LICENSE_CHECK_ACTION` | str | `warn` | Action on license violation (`warn` / `deny`) |
+| `LICENSE_COPYLEFT_ACTION` | str | `allow` | Action for copyleft licenses (`allow` / `warn` / `deny`) |
+
+## Reachability Settings
+
+| Environment Variable | Type | Default | Description |
+|---|---|---|---|
+| `REACHABILITY_ENABLED` | bool | `true` | Enable/disable reachability analysis for flagged code paths |
+
+## YARA Rule Settings
+
+| Environment Variable | Type | Default | Description |
+|---|---|---|---|
+| `YARA_RULE_SOURCES` | list | `[]` | List of URLs to `.yar` rule files for malware signature matching |
+| `YARA_AUTO_UPDATE` | bool | `false` | Automatically fetch updated YARA rules on startup |
 
 ## LLM Judge Settings
 
@@ -107,9 +134,26 @@ All settings are managed via environment variables or a `.env` file.
 | `DECISION_MODE` | str | `warn` | Decision mode (`warn`: warnings only / `enforce`: blocking enabled) |
 | `WARN_THRESHOLD` | float | `0.3` | Threshold for quarantine verdict |
 | `DENY_THRESHOLD` | float | `0.7` | Threshold for deny verdict |
-| `COOLDOWN_WEIGHT` | float | `0.3` | Weight for cooldown scanner |
-| `STATIC_ANALYSIS_WEIGHT` | float | `0.4` | Weight for static analysis scanner |
-| `LLM_WEIGHT` | float | `0.3` | Weight for LLM Judge scanner |
+
+### Scanner Weights
+
+All 12 scanners contribute to the final risk score. Each weight controls how much influence that scanner has on the decision.
+
+| Environment Variable | Type | Default | Description |
+|---|---|---|---|
+| `IOC_CHECK_WEIGHT` | float | `1.0` | Weight for IOC (Indicator of Compromise) check |
+| `ADVISORY_CHECK_WEIGHT` | float | `0.9` | Weight for security advisory check |
+| `COOLDOWN_WEIGHT` | float | `0.3` | Weight for cooldown scanner (configurable) |
+| `METADATA_CHECK_WEIGHT` | float | `0.5` | Weight for package metadata check |
+| `MAINTAINER_CHECK_WEIGHT` | float | `0.6` | Weight for maintainer reputation check |
+| `STATIC_ANALYSIS_WEIGHT` | float | `0.4` | Weight for static analysis scanner (configurable) |
+| `HEURISTICS_CHECK_WEIGHT` | float | `0.35` | Weight for heuristics check |
+| `AST_ANALYSIS_WEIGHT` | float | `0.65` | Weight for AST-based analysis |
+| `YARA_SCAN_WEIGHT` | float | `0.55` | Weight for YARA rule scanning |
+| `REACHABILITY_WEIGHT` | float | `0.5` | Weight for reachability analysis |
+| `LICENSE_CHECK_WEIGHT` | float | `0.4` | Weight for license compliance check |
+| `DEPENDENCY_CHECK_WEIGHT` | float | `0.45` | Weight for dependency analysis check |
+| `LLM_WEIGHT` | float | `0.3` | Weight for LLM Judge scanner (configurable) |
 
 ## Cache Settings
 
@@ -262,6 +306,19 @@ bundle config set --global mirror.https://rubygems.org http://localhost:4875
 # Set via environment variables
 export GOPROXY=http://localhost:4876,direct
 export GONOSUMCHECK=*
+```
+
+### Cargo
+```toml
+# ~/.cargo/config.toml
+[registries.guard-proxy]
+index = "sparse+http://localhost:4877/index/"
+
+[source.crates-io]
+replace-with = "guard-proxy"
+
+[source.guard-proxy]
+registry = "sparse+http://localhost:4877/index/"
 ```
 
 ---

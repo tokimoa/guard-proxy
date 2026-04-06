@@ -12,6 +12,9 @@
 | Phase 4 | PyPI + RubyGems support | pip install / gem install protection | Complete |
 | Phase 5 | Operations hardening | IOC, notifications, metrics, CI/CD | Complete |
 | Phase 5.5 | Smart Two-Tier Scanning | LLM latency elimination, background scanning | Complete |
+| Phase 6 | Multi-Registry & Cargo | Single-port routing, Cargo support | Complete |
+| Phase 7 | License & YARA & Reachability | License compliance, YARA marketplace, reachability analysis | Complete |
+| Phase 8 | Public Benchmark Validation | DataDog, OSSF, OSPTrack, GuardDog coverage | Complete |
 
 ---
 
@@ -326,3 +329,91 @@ Achieve production-ready quality and operability.
 - [x] Installable via `pip install guard-proxy`
 - [x] Integrable as a DevContainer
 - [x] One-command startup via docker-compose including Ollama sidecar
+
+---
+
+## Phase 6: Multi-Registry & Cargo (v2.1.0-v2.2.0) — COMPLETE
+
+### Goal
+Consolidate all registry proxies onto a single port with path-based routing and add Cargo (Rust) ecosystem support.
+
+### Tasks
+
+#### 6-1. Single-Port Routing
+- [x] Unified path-based routing (`/npm/`, `/pypi/`, `/gems/`, `/go/`, `/cargo/`)
+- [x] Automatic registry detection from request path
+- [x] Backward-compatible standalone port mode
+
+#### 6-2. Cargo Registry Support
+- [x] `app/registry/cargo_client.py` -- crates.io API client
+- [x] `app/proxy/cargo.py` -- Cargo registry proxy
+- [x] `app/scanners/patterns/cargo_patterns.py` -- 20 Cargo-specific detection patterns
+- [x] `build.rs` severity boosting (native build scripts treated as higher risk)
+
+### Completion Criteria
+- [x] All five registries accessible via single port with path prefix
+- [x] `cargo install <crate>` works correctly through the proxy
+- [x] `build.rs` files with suspicious patterns are detected with boosted severity
+
+---
+
+## Phase 7: License & YARA & Reachability (v2.3.0-v2.5.0) — COMPLETE
+
+### Goal
+Add license compliance scanning, community YARA rule support, reachability analysis for false positive reduction, and detection hardening against evasion techniques.
+
+### Tasks
+
+#### 7-1. License Compliance Scanner (v2.3.0)
+- [x] SPDX expression parsing with alias normalization
+- [x] Configurable allow/deny list policy
+- [x] Copyleft detection as separate configurable action
+- [x] Works without LLM
+
+#### 7-2. YARA Rule Marketplace (v2.4.0)
+- [x] Community rule sources via URL + SHA256 change detection
+- [x] CLI management (`guard-proxy yara add/remove/update/list`)
+- [x] Auto-update on startup (opt-in)
+- [x] Works without LLM
+
+#### 7-3. Reachability Analysis (v2.5.0)
+- [x] Intra-file AST-based call graph analysis
+- [x] Python and JavaScript support
+- [x] Unreachable dangerous code marked as "pass" to reduce false positives
+- [x] Works without LLM
+
+#### 7-4. Detection Hardening
+- [x] Critical patterns never downgraded even with safe indicators
+- [x] Single high-severity match = fail verdict
+- [x] ReDoS mitigation via regex window reduction
+- [x] Evasion resistance improvements across all scanners
+
+### Completion Criteria
+- [x] License policy violations detected and reported per configuration
+- [x] Community YARA rules fetchable, verifiable, and applied during scans
+- [x] False positive rate reduced by reachability analysis
+- [x] Known evasion techniques blocked by detection hardening
+
+---
+
+## Phase 8: Public Benchmark Validation — COMPLETE
+
+### Goal
+Validate Guard Proxy's detection capabilities against public malicious package datasets and establish coverage metrics.
+
+### Tasks
+
+#### 8-1. Dataset Validation
+- [x] DataDog malicious packages dataset: 11,291/11,291 (100%) IOC coverage
+- [x] OSSF cross-reference via osv.dev API
+- [x] OSPTrack Zenodo dataset validation
+- [x] GuardDog rule coverage: all ecosystems 100%
+
+#### 8-2. Test Suite
+- [x] 730+ tests passing
+
+### Completion Criteria
+- [x] 100% IOC coverage on DataDog dataset
+- [x] 100% GuardDog rule coverage across all ecosystems
+- [x] OSPTrack and OSSF datasets validated
+- [x] 730+ tests passing

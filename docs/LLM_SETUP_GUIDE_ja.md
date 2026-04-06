@@ -32,6 +32,10 @@ uv sync
 guard-proxy start
 ```
 
+これだけで12種のfast-tierスキャナ（IOC、Advisory、Cooldown、Metadata（タイポスクワット）、Maintainer、Static Analysis、Heuristics、AST、YARA、Reachability、License、Dependency）が有効になります。
+
+> **注**: ライセンスコンプライアンススキャン、到達可能性分析、YARAルールマーケットプレイスはすべてLLMなしで動作します。LLMコストゼロで高い検出カバレッジを提供します。
+
 ### Option B: ローカルLLM（Ollama）— 推奨
 
 **無料。データが外部に送信されない。**

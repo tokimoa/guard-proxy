@@ -55,7 +55,9 @@ uv sync
 guard-proxy start
 ```
 
-This alone activates the 10-layer fast-tier scanners (IOC, Advisory, Cooldown, Typosquat, Maintainer, Static Analysis, YARA, Heuristics, AST).
+This alone activates the 12 fast-tier scanners (IOC, Advisory, Cooldown, Metadata (typosquatting), Maintainer, Static Analysis, Heuristics, AST, YARA, Reachability, License, Dependency).
+
+> **Note**: License compliance scanning, Reachability analysis, and the YARA rule marketplace all work entirely without LLM. These features provide significant detection coverage at zero LLM cost.
 
 ---
 
@@ -118,7 +120,7 @@ LLM Judge enabled — tiered scanning active
 ```
 Package download
     │
-    ├─ Fast Tier (< 1 second): 10 scanners judge instantly
+    ├─ Fast Tier (< 1 second): 12 scanners judge instantly
     │   → Clean & no install hooks → instant pass (LLM runs in background)
     │   → Suspicious patterns found → LLM analyzes synchronously
     │

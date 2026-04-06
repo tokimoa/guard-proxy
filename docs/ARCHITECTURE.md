@@ -4,7 +4,7 @@
 
 ## Overview
 
-Guard Proxy is a security proxy that protects developers from supply chain attacks targeting npm, PyPI, RubyGems, and Go modules. It transparently intercepts `npm install` / `pip install` / `gem install` / `go get` commands, verifies package safety, and only then permits the download.
+Guard Proxy is a security proxy that protects developers from supply chain attacks targeting npm, PyPI, RubyGems, Go modules, and Cargo crates. It transparently intercepts `npm install` / `pip install` / `gem install` / `go get` / `cargo install` commands, verifies package safety, and only then permits the download.
 
 ## Background and Motivation
 
@@ -18,7 +18,7 @@ These attacks were **executed immediately at install time** through `postinstall
 ## System Architecture Diagram
 
 ```
-Developer (npm install / pip install / gem install)
+Developer (npm install / pip install / gem install / cargo install)
     |
     v
 +----------------------------------------------------------+
@@ -80,7 +80,7 @@ Developer (npm install / pip install / gem install)
 +----------------------------------------------------------+
     |
     v
-Upstream Registries (registry.npmjs.org / pypi.org / rubygems.org / proxy.golang.org)
+Upstream Registries (registry.npmjs.org / pypi.org / rubygems.org / proxy.golang.org / crates.io)
 ```
 
 ## Component Details
@@ -96,6 +96,7 @@ Handles HTTP request interception and relaying to upstream registries.
 | `pypi.py` | PyPI Simple API / JSON API protocol implementation |
 | `rubygems.py` | RubyGems Compact Index / gem download protocol implementation |
 | `go.py` | GOPROXY protocol implementation, module zip interception and scanning |
+| `cargo.py` | Cargo registry API protocol implementation, crate download interception |
 | `middleware.py` | Common middleware for request logging, timeout control, etc. |
 
 #### npm Proxy Communication Flow
@@ -120,9 +121,52 @@ Handles HTTP request interception and relaying to upstream registries.
 3. GET /gems/<gem>-<ver>.gem   -> Gem download (scan happens here)
 ```
 
+#### Cargo Proxy Communication Flow
+
+```
+1. GET /api/v1/crates/<crate>        -> Crate metadata fetch
+2. GET /api/v1/crates/<crate>/<ver>/download -> Crate download (scan happens here)
+```
+
+#### Single-Port Routing
+
+All registries can be served on a single port using path-based routing:
+
+```
+localhost:8100/npm/...    -> npm registry proxy
+localhost:8100/pypi/...   -> PyPI registry proxy
+localhost:8100/gems/...   -> RubyGems registry proxy
+localhost:8100/go/...     -> Go module proxy
+localhost:8100/cargo/...  -> Cargo registry proxy
+```
+
+This simplifies deployment and firewall configuration for team environments.
+
 ### 2. Scanner Layer (`app/scanners/`)
 
-Three types of scanners implement the common `ScannerProtocol`.
+Scanners implement a two-tier architecture: **fast-tier** scanners always run on every package (lightweight, deterministic checks), while **slow-tier** scanners are conditional or deferred (network-dependent, computationally expensive).
+
+**Fast-tier scanners** (always run):
+
+1. IOC Checker -- Known malicious package/domain lookup
+2. Advisory Scanner -- Security advisory database check
+3. Cooldown Gate -- Publish date freshness check
+4. Metadata Scanner -- Typosquatting detection via name similarity
+5. Maintainer Scanner -- Maintainer reputation and change detection
+6. Static Analysis -- Pattern matching on install scripts
+7. Heuristics Scanner -- Behavioral heuristic analysis
+8. AST Scanner -- Abstract syntax tree analysis for suspicious constructs
+9. YARA Scanner -- YARA rule matching against package contents
+10. Reachability Scanner -- Reachability analysis of flagged code paths
+11. License Scanner -- License compliance verification
+12. Dependency Scanner -- Dependency tree risk assessment
+
+**Slow-tier scanners** (conditional/deferred):
+
+1. Dependency Graph (deps.dev) -- External dependency graph analysis via deps.dev API
+2. LLM Judge -- Multi-provider LLM judgment for ambiguous cases
+
+All scanners implement the common `ScannerProtocol`.
 
 ```python
 class ScannerProtocol(Protocol):
@@ -312,12 +356,12 @@ Verdict:
 
 ### 4. Registry Client (`app/registry/`)
 
-Handles communication with upstream registry APIs (npmjs.org / pypi.org / rubygems.org).
+Handles communication with upstream registry APIs (npmjs.org / pypi.org / rubygems.org / proxy.golang.org / crates.io).
 
 - Fetches package metadata (publish date, author, dependency list)
-- Downloads tarball / whl / .gem files
+- Downloads tarball / whl / .gem / .zip / .crate files
 - httpx-based async HTTP client
-- Registry-specific API protocol support (npm JSON API / PyPI Simple API / RubyGems Compact Index)
+- Registry-specific API protocol support (npm JSON API / PyPI Simple API / RubyGems Compact Index / GOPROXY / Cargo Registry API)
 
 ### 5. Database (`app/db/`)
 
@@ -342,6 +386,10 @@ guard-proxy cache list         # List cache entries
 guard-proxy status             # Check status
 guard-proxy llm status         # Check LLM provider connectivity
 guard-proxy llm test           # Test LLM provider operation
+guard-proxy rules list         # List active scan rules
+guard-proxy rules update       # Update scan rules from upstream
+guard-proxy rules add <rule>   # Add a custom scan rule
+guard-proxy rules remove <rule> # Remove a scan rule
 ```
 
 ### 7. Admin API (`app/api/`)
@@ -361,7 +409,7 @@ guard-proxy/
 +-- app/                              # Main application
 |   +-- main.py                       # FastAPI application entry point
 |   +-- core/                         # Configuration, logging, exception definitions
-|   +-- proxy/                        # npm/PyPI/RubyGems proxy engine
+|   +-- proxy/                        # npm/PyPI/RubyGems/Go/Cargo proxy engine
 |   +-- scanners/                     # Security scanners
 |   |   +-- patterns/                 # Malicious pattern definitions
 |   |   +-- llm/                      # LLM Judge subpackage
@@ -414,7 +462,9 @@ Local Development:
     PyPI proxy:      localhost:4874
     RubyGems proxy:  localhost:4875
     Go proxy:        localhost:4876
+    Cargo proxy:     localhost:4877
     Admin API:       localhost:8100 (includes /dashboard)
+    Single-port:     localhost:8100/npm/, /pypi/, /gems/, /go/, /cargo/
   Ollama:            localhost:11434 (LLM inference)
 
 Team Server:
@@ -423,6 +473,18 @@ Team Server:
     PyPI proxy:      guard.internal.example.com:4874
     RubyGems proxy:  guard.internal.example.com:4875
     Go proxy:        guard.internal.example.com:4876
+    Cargo proxy:     guard.internal.example.com:4877
     Admin API:       guard.internal.example.com:8100
   Ollama:        Same server or separate host (GPU-equipped machine)
 ```
+
+## Recent Features (v2.3.0 -- v2.5.0)
+
+| Version | Feature | Description |
+|---|---|---|
+| v2.3.0 | License compliance | License Scanner checks packages against configurable license policies (allow/deny lists). Violations can warn or block installation |
+| v2.4.0 | YARA marketplace | Community-contributed YARA rules for detecting malicious patterns. Rules can be managed via `guard-proxy rules list/update/add/remove` |
+| v2.5.0 | Reachability analysis | Reachability Scanner traces flagged code paths to determine if suspicious code is actually executed at install time, reducing false positives |
+| v2.5.0 | Cargo support | Full Cargo registry proxy with crate scanning, typosquatting detection, and build.rs analysis |
+| v2.5.0 | Two-tier scanning | Fast-tier (12 deterministic scanners) always runs; slow-tier (Dependency Graph, LLM Judge) is conditional/deferred for performance |
+| v2.5.0 | Single-port routing | All registry proxies accessible via path-based routing on a single port |

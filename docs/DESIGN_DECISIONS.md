@@ -92,10 +92,20 @@ verdict_score:
   warn = 0.5
   fail = 1.0
 
-Default weights:
-  cooldown:        0.3
-  static_analysis: 0.4
-  llm_judge:       0.3
+Default weights (12 scanner weights):
+  ioc:              1.0
+  advisory:         0.9
+  cooldown:         0.3
+  metadata:         0.5
+  maintainer:       0.4
+  static_analysis:  0.4
+  heuristics:       0.3
+  ast:              0.4
+  yara:             0.6
+  reachability:     0.3
+  license:          0.3
+  dependency:       0.3
+  llm_judge:        0.3
 
 Verdict:
   allow:      score < 0.3
@@ -348,3 +358,119 @@ Cloud API key also not configured -> static analysis only (LLM disabled, warning
 
 ### Changeability
 High. Instantly switchable via the `LLM_STRATEGY` environment variable.
+
+---
+
+## DD-09: License Compliance Scanner (v2.3.0)
+
+### Background
+Enterprise users require license compliance checking as part of their supply chain security policy, but license policies vary widely across organizations.
+
+### Options
+1. **Built-in opinionated allow/deny list** (e.g., always block AGPL)
+2. **Configurable allow/deny list approach with no built-in opinions**
+3. **No license scanning (leave to external tools)**
+
+### Decision
+**Option 2: Configurable allow/deny list approach**
+
+### Rationale
+- Enterprise users need different license policies; what is acceptable varies by organization and project
+- SPDX expression parsing with alias normalization handles the wide variety of license identifiers in the wild
+- Copyleft detection is provided as a separate configurable action (warn vs. deny)
+- Opt-in by default: license scanning does not block anything until the user configures a policy
+
+### Tradeoffs
+- Requires initial configuration effort from the user
+- SPDX expression parsing adds complexity (compound expressions like `MIT OR Apache-2.0`)
+- Some packages have missing or inaccurate license metadata
+
+### Changeability
+High. Policy is entirely configuration-driven. Adding new license categories or actions is straightforward.
+
+---
+
+## DD-10: YARA Rule Marketplace (v2.4.0)
+
+### Background
+YARA rules are highly effective for detecting known malicious patterns in package code, but the threat landscape evolves rapidly. A mechanism for community-contributed rules was needed.
+
+### Options
+1. **Bundled rules only (ship with Guard Proxy)**
+2. **Config-file-based external rule sources**
+3. **CLI-managed marketplace with URL + SHA256 change detection**
+
+### Decision
+**Option 3: CLI-managed marketplace**
+
+### Rationale
+- Rule freshness is critical for supply chain attack detection; community rules extend coverage beyond what the core team can maintain
+- URL + SHA256 change detection ensures rule integrity and enables update notifications
+- CLI management (`guard-proxy yara add/remove/update/list`) is more ergonomic than editing config files
+- Auto-update on startup is available as an opt-in feature for users who want always-fresh rules
+
+### Tradeoffs
+- Trust model: users must vet community rule sources themselves
+- Network dependency for rule updates (offline environments need manual import)
+- SHA256 verification adds a step when publishing rule updates
+
+### Changeability
+Medium. The marketplace protocol (URL + SHA256) is simple and extensible. Adding new source types (e.g., Git repositories) is straightforward.
+
+---
+
+## DD-11: Reachability Analysis (v2.5.0)
+
+### Background
+Static analysis scanners can flag dangerous function calls (e.g., `eval`, `exec`, `child_process.exec`) that are present in code but never actually reachable from install hooks or entry points. This creates false positives.
+
+### Options
+1. **No reachability analysis (flag all dangerous patterns)**
+2. **Intra-file AST-based call graph analysis**
+3. **Cross-file whole-program analysis**
+
+### Decision
+**Option 2: Intra-file AST-based call graph analysis**
+
+### Rationale
+- Reduces false positives by marking unreachable dangerous code as "pass" instead of "fail"
+- AST-based analysis for Python and JavaScript is fast and does not require LLM
+- Intra-file scope is a practical tradeoff between accuracy and performance
+- Cross-file analysis would require LLM-tier resources and significantly increase scan latency
+
+### Tradeoffs
+- Cross-file call chains are not tracked (a dangerous function called indirectly from another file is not detected as unreachable)
+- Dynamic dispatch and metaprogramming can defeat static call graph analysis
+- Language support is limited to Python and JavaScript initially
+
+### Changeability
+Medium. Adding new languages requires implementing AST parsing for that language. Extending to cross-file analysis would be a significant effort, likely requiring LLM integration.
+
+---
+
+## DD-12: Detection Hardening
+
+### Background
+As Guard Proxy matures, adversaries may attempt to evade detection by combining benign indicators with malicious code, or by using patterns that exploit regex backtracking.
+
+### Options
+1. **Treat all indicators equally (benign indicators can lower score)**
+2. **Critical patterns never downgraded; single high-severity match = fail**
+3. **Delegate all ambiguous cases to LLM**
+
+### Decision
+**Option 2: Critical patterns never downgraded**
+
+### Rationale
+- A security tool must err on the side of detection; false negatives are worse than false positives
+- Critical patterns (e.g., direct `eval(Buffer.from(...))`, C2 communication) should never be downgraded even when surrounded by safe-looking code
+- A single high-severity match is sufficient for a fail verdict
+- ReDoS mitigation via regex window reduction protects the proxy itself from performance attacks
+
+### Tradeoffs
+- May increase false positive rate for packages that legitimately use patterns similar to attack code
+- Rigid rules reduce the decision engine's ability to consider context
+- Regex window reduction may miss patterns that span large code blocks
+
+### Changeability
+Low. Relaxing detection hardening rules risks creating evasion vectors. Changes should only be made with thorough benchmark validation.
