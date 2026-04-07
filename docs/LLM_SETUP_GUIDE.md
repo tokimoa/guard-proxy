@@ -82,7 +82,7 @@ Download the installer from [https://ollama.com/download](https://ollama.com/dow
 ### Step 2: Download a Model
 
 ```bash
-ollama pull qwen3.5:latest
+ollama pull qwen3.5:9b
 ```
 
 **Download size**: ~5GB (first time only)
@@ -100,7 +100,7 @@ ollama pull qwen3.5:latest
 cat > .env << 'EOF'
 LLM_ENABLED=true
 LLM_STRATEGY=local_only
-OLLAMA_MODEL=qwen3.5:latest
+OLLAMA_MODEL=qwen3.5:9b
 EOF
 ```
 
@@ -144,7 +144,7 @@ ollama serve
 # Check downloaded models
 ollama list
 # Download if missing
-ollama pull qwen3.5:latest
+ollama pull qwen3.5:9b
 ```
 
 ---
@@ -170,7 +170,7 @@ EOF
 cat > .env << 'EOF'
 LLM_ENABLED=true
 LLM_STRATEGY=local_first
-OLLAMA_MODEL=qwen3.5:latest
+OLLAMA_MODEL=qwen3.5:9b
 ANTHROPIC_API_KEY=sk-ant-api03-xxxxxxxxxxxxx
 OPENAI_API_KEY=sk-xxxxxxxxxxxxx
 EOF
@@ -209,7 +209,7 @@ With this configuration:
 
 | Model | Parameters | Size | RAM | Code Analysis | JSON Stability | Command |
 |---|---|---|---|---|---|---|
-| **`qwen3.5:latest`** | 8B | 5GB | 8GB | ★★★★★ | ◎ Stable | `ollama pull qwen3.5:latest` |
+| **`qwen3.5:9b`** | 8B | 5GB | 8GB | ★★★★★ | ◎ Stable | `ollama pull qwen3.5:9b` |
 | **`gemma4:26b`** | 26B (MoE, 4B active) | 18GB | 18GB | ★★★★★ | ◎ Stable | `ollama pull gemma4:26b` |
 | **`qwen3-coder:30b`** | 30B (MoE, 3.3B active) | 19GB | 20GB | ★★★★★+ | ◎ Stable | `ollama pull qwen3-coder:30b` |
 | `mistral-small3.2:24b` | 24B | 15GB | 18GB | ★★★★☆ | ◎ Stable | `ollama pull mistral-small3.2:24b` |
@@ -220,16 +220,16 @@ With this configuration:
 
 | Model | Parameters | Size | RAM | Code Analysis | Command |
 |---|---|---|---|---|---|
-| `qwen3.5:latest` (8B) | 8B | 5GB | 8GB | ★★★★★ | `ollama pull qwen3.5:latest` |
+| `qwen3.5:9b` (8B) | 8B | 5GB | 8GB | ★★★★★ | `ollama pull qwen3.5:9b` |
 | `gemma4:e4b` | 4B | 10GB | 8GB | ★★★★☆ | `ollama pull gemma4:e4b` |
 | `qwen3:4b` | 4B | 3GB | 4GB | ★★★☆☆ | `ollama pull qwen3:4b` |
 
 ### Which One Should I Pick?
 
-- **Not sure → `qwen3.5:latest`** (Default recommendation. Runs on 8GB RAM, best balance of accuracy, speed, and stability)
+- **Not sure → `qwen3.5:9b`** (Default recommendation. Runs on 8GB RAM, best balance of accuracy, speed, and stability)
 - **32GB RAM → `gemma4:26b` or `qwen3-coder:30b`** (MoE architecture means effective 4B/3.3B inference speed. `qwen3-coder` is best for code analysis)
 - **16–18GB RAM → `mistral-small3.2:24b`** (Mature structured output support, stability-focused)
-- **Only 8GB RAM → `qwen3.5:latest`** (Optimal choice for this constraint)
+- **Only 8GB RAM → `qwen3.5:9b`** (Optimal choice for this constraint)
 - **Only 4GB RAM → `qwen3:4b`** (Lower accuracy, but still better than no LLM)
 
 > **Note**: MoE models (gemma4:26b, qwen3-coder:30b) have large parameter counts but only activate a fraction during inference, making them fast.

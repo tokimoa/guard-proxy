@@ -59,7 +59,7 @@ curl -fsSL https://ollama.com/install.sh | sh
 #### モデルダウンロード
 
 ```bash
-ollama pull qwen3.5:latest    # 推奨（5GB、8GB RAM必要）
+ollama pull qwen3.5:9b    # 推奨（5GB、8GB RAM必要）
 ```
 
 メモリが足りない場合:
@@ -73,7 +73,7 @@ ollama pull qwen3:4b          # 軽量版（3GB、4GB RAM）
 cat > .env << 'EOF'
 LLM_ENABLED=true
 LLM_STRATEGY=local_only
-OLLAMA_MODEL=qwen3.5:latest
+OLLAMA_MODEL=qwen3.5:9b
 EOF
 
 guard-proxy start
@@ -108,7 +108,7 @@ EOF
 
 | モデル | パラメータ | サイズ | RAM | コード分析精度 | JSON安定性 |
 |---|---|---|---|---|---|
-| **`qwen3.5:latest`** | 8B | 5GB | 8GB | ★★★★★ | ◎ 安定 |
+| **`qwen3.5:9b`** | 8B | 5GB | 8GB | ★★★★★ | ◎ 安定 |
 | **`gemma4:26b`** | 26B (MoE, 4B active) | 18GB | 18GB | ★★★★★ | ◎ 安定 |
 | **`qwen3-coder:30b`** | 30B (MoE, 3.3B active) | 19GB | 20GB | ★★★★★+ | ◎ 安定 |
 | `mistral-small3.2:24b` | 24B | 15GB | 18GB | ★★★★☆ | ◎ 安定 |
@@ -118,9 +118,9 @@ EOF
 
 ### どれを選ぶ？
 
-- **迷ったら** → `qwen3.5:latest`（デフォルト推奨）
+- **迷ったら** → `qwen3.5:9b`（デフォルト推奨）
 - **32GB RAM** → `gemma4:26b` or `qwen3-coder:30b`（MoE高精度）
-- **8GB RAM** → `qwen3.5:latest`
+- **8GB RAM** → `qwen3.5:9b`
 - **4GB RAM** → `qwen3:4b`
 
 > MoEモデルはパラメータ数が大きくても推論が高速。DeepSeek R1系はJSON不安定のため非推奨。
@@ -138,5 +138,5 @@ ollama serve                            # Ollamaを起動
 **「Model not found」:**
 ```bash
 ollama list                             # モデル一覧確認
-ollama pull qwen3.5:latest             # なければダウンロード
+ollama pull qwen3.5:9b             # なければダウンロード
 ```

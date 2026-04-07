@@ -12,7 +12,7 @@ from app.core.version import VERSION
 
 app = typer.Typer(
     name="guard-proxy",
-    help="Security proxy for npm/PyPI — protect developers from supply chain attacks.",
+    help="Security proxy for npm/PyPI/RubyGems/Go/Cargo — protect developers from supply chain attacks.",
     no_args_is_help=True,
 )
 rules_app = typer.Typer(help="Manage YARA rule sources and updates.")
@@ -33,7 +33,7 @@ def start(
     console.print(f"[bold green]Guard Proxy v{VERSION}[/bold green]")
     console.print(f"  Mode: {settings.decision_mode}")
     console.print(f"  Listening: {host}:{bind_port}")
-    console.print("  Single-port routes: /npm, /pypi, /gems, /go")
+    console.print("  Single-port routes: /npm, /pypi, /gems, /go, /cargo")
     console.print(f"  Dashboard: http://{host}:{bind_port}/dashboard")
 
     uvicorn.run(
