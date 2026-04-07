@@ -222,12 +222,12 @@ Real data fetched from public APIs and validated against our IOC database:
 | **DataDog PyPI** | [manifest.json](https://github.com/DataDog/malicious-software-packages-dataset) | 1,786 | 1,786 | **100.0%** |
 | **OSSF cross-ref** (npm sample) | [osv.dev API](https://github.com/ossf/malicious-packages) | 200 | 192 | **96.0%** |
 | **OSSF cross-ref** (PyPI sample) | [osv.dev API](https://github.com/ossf/malicious-packages) | 200 | 141 | **70.5%** |
-| **OSPTrack** (PyPI, from log) | [Zenodo](https://zenodo.org/records/14197378) | 8,134 | 800 | **49.2%**\*\* |
-| **OSPTrack** (npm, from log) | [Zenodo](https://zenodo.org/records/14197378) | 2,316 | 13 | — |
+| **OSPTrack** (full labeled, 9,461 pkgs) | [Zenodo](https://zenodo.org/records/14197378) | 1,962 malicious | 160 | **8.2%**\*\* |
 
 **Total IOC coverage: 11,291/11,291 (100%)** against the DataDog dataset.
+**OSPTrack false positive rate: 9/7,234 benign packages (0.12%).**
 
-\*\* OSPTrack contains both malicious AND benign packages (~20% malicious per paper). The 800 matched PyPI packages represent ~49% of the estimated malicious subset. The remaining gap is because OSPTrack sources packages from OSSF package-analysis (BigQuery), which uses different naming than the DataDog dataset. The two datasets are complementary, not identical.
+\*\* OSPTrack's 8.2% IOC recall reflects that this dataset uses dynamic analysis labels (OSSF package-analysis) with different package names than the DataDog IOC source. IOC is **one layer** of multi-layer defense — at scan time, Static Analysis + YARA + AST + Heuristics + Reachability + LLM provide additional detection. The key metric is the **0.12% false positive rate** across 7,234 benign packages.
 
 OSSF cross-reference rates are lower because the DataDog dataset includes packages that predate OSSF's MAL-* advisory system. Both datasets are complementary — Guard Proxy uses DataDog as its primary IOC source.
 
