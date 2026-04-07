@@ -2,8 +2,8 @@
 
 [日本語ドキュメント](docs/ARCHITECTURE_ja.md) | [English docs](docs/)
 
-> Supply chain security proxy for npm, PyPI, RubyGems, and Go modules.
-> Intercepts `npm install` / `pip install` / `gem install` / `go get` transparently and blocks malicious packages before they execute.
+> Supply chain security proxy for npm, PyPI, RubyGems, Go, and Cargo.
+> Intercepts `npm install` / `pip install` / `gem install` / `go get` / `cargo install` transparently and blocks malicious packages before they execute.
 
 [![CI](https://github.com/tokimoa/guard-proxy/actions/workflows/ci.yml/badge.svg)](https://github.com/tokimoa/guard-proxy/actions/workflows/ci.yml)
 
@@ -45,13 +45,13 @@ npm install express    # Scanned and allowed ✅
 
 ```bash
 # Install Ollama (https://ollama.com)
-ollama pull qwen3.5:latest
+ollama pull qwen3.5:9b
 
 # Configure Guard Proxy
 cat > .env << 'EOF'
 LLM_ENABLED=true
 LLM_STRATEGY=local_only
-OLLAMA_MODEL=qwen3.5:latest
+OLLAMA_MODEL=qwen3.5:9b
 DECISION_MODE=warn
 EOF
 
@@ -111,6 +111,16 @@ export GOPROXY=http://localhost:4876,direct
 export GONOSUMCHECK=*
 ```
 
+### cargo
+```toml
+# ~/.cargo/config.toml
+[registries.guard-proxy]
+index = "sparse+http://localhost:4877/api/v1/crates/"
+
+[source.crates-io]
+replace-with = "guard-proxy"
+```
+
 ## How It Works
 
 ```
@@ -120,19 +130,21 @@ npm install express
 ┌─────────────────────────────────────────────────────────────┐
 │                      Guard Proxy                             │
 │                                                             │
-│  Fast Tier (< 1 second, always runs)                        │
+│  Fast Tier (< 1 second, always runs) — 12 scanners          │
 │  ├─ IOC Database (11,000+ known malicious packages)         │
 │  ├─ OSV/GHSA Advisory Check                                │
 │  ├─ Cooldown Gate (new package age)                         │
 │  ├─ Typosquatting Detection (Levenshtein, 6000+ packages)   │
 │  ├─ Maintainer Change Tracking                              │
-│  ├─ Static Analysis (180+ patterns × 4 registries)          │
-│  ├─ YARA Rules (GuardDog compatible)                        │
+│  ├─ Static Analysis (200+ patterns × 5 registries)          │
+│  ├─ YARA Rules (GuardDog compatible + marketplace)          │
 │  ├─ Heuristics (entropy, binary, Unicode steganography)     │
-│  └─ AST Analysis (variable indirection, dataflow)           │
+│  ├─ AST Analysis (variable indirection, dataflow)           │
+│  ├─ Reachability Analysis (call graph, dead code filter)    │
+│  ├─ License Compliance (SPDX, copyleft, allow/deny list)   │
+│  └─ Dependency Graph Analysis (via deps.dev)                │
 │                                                             │
 │  Slow Tier (background, for suspicious packages)            │
-│  ├─ Dependency Graph Analysis (via deps.dev)                │
 │  └─ LLM Judge (Ollama / Claude / GPT)                      │
 │                                                             │
 │  Decision: allow ✅ │ quarantine ⚠️ │ deny ❌               │
@@ -156,6 +168,11 @@ guard-proxy status                            # Show proxy status
 guard-proxy sync-ioc                          # Sync IOC from DataDog dataset
 guard-proxy sbom                              # Export SBOM (CycloneDX JSON)
 guard-proxy sbom --file sbom.json             # Export to file
+guard-proxy version                           # Show version
+guard-proxy rules list                        # List installed YARA rule sources
+guard-proxy rules update                      # Fetch latest rules from all sources
+guard-proxy rules add <name> <url>            # Add community rule source
+guard-proxy rules remove <name>               # Remove rule source
 ```
 
 ## Configuration Modes
@@ -181,7 +198,7 @@ Adds AI-powered judgment for suspicious packages. Runs entirely on your machine.
 ```env
 LLM_ENABLED=true
 LLM_STRATEGY=local_only
-OLLAMA_MODEL=qwen3.5:latest
+OLLAMA_MODEL=qwen3.5:9b
 ```
 
 **Requirements**: [Ollama](https://ollama.com) + 8GB RAM (for Qwen 3.5 8B model). Also supports Gemma 4, Qwen3-Coder, Mistral Small 3.2 — see [LLM Setup Guide](docs/LLM_SETUP_GUIDE.md)
@@ -280,7 +297,7 @@ Transparency matters. Here's what you should know:
 - **Not a CVE scanner** — Use `npm audit` / `pip-audit` alongside Guard Proxy for known vulnerability checking
 - **No sandbox/dynamic analysis** — Detection is static + LLM-based, not runtime execution
 - **Intra-file reachability only** — Call graph analysis is limited to single-file scope (cross-file requires LLM tier)
-- **4 registries only** — npm, PyPI, RubyGems, Go. Cargo, Maven planned for future releases
+- **5 registries** — npm, PyPI, RubyGems, Go, Cargo. Maven/Gradle planned for future releases
 
 Guard Proxy is designed to **complement** existing tools, not replace them.
 
