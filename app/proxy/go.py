@@ -88,11 +88,14 @@ class GoProxy:
 
         encoded = GoRegistryClient.encode_module_path(module)
         # Reconstruct the path after the module with the encoded version
-        suffix = path[path.index("/@") :]  # e.g. /@v/list, /@v/v1.0.0.info, /@latest
+        try:
+            suffix = path[path.index("/@") :]  # e.g. /@v/list, /@v/v1.0.0.info, /@latest
+        except ValueError:
+            return Response(content="Invalid Go module path", status_code=400)
         upstream_path = f"/{encoded}{suffix}"
 
         try:
-            response = await self._registry._client.get(upstream_path)
+            response = await self._registry.forward_request(upstream_path)
         except Exception as e:
             logger.error("Go upstream error: {err}", err=str(e))
             return Response(content="Upstream error", status_code=502)
@@ -209,10 +212,11 @@ class GoProxy:
                 ver=version,
             )
 
+        safe_filename = filename.replace('"', "").replace("\\", "").replace("\n", "").replace("\r", "")
         return Response(
             content=content,
             media_type="application/zip",
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+            headers={"Content-Disposition": f'attachment; filename="{safe_filename}"'},
         )
 
 

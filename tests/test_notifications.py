@@ -105,11 +105,12 @@ class TestNotifyDecision:
             await svc.notify_decision("npm", "pkg", "1.0.0", decision)
         assert len(svc._send_times) == 1
 
-    async def test_does_not_record_send_time_on_exception(self, svc):
+    async def test_records_send_time_even_on_exception(self, svc):
+        """Rate limiting counts attempts, not just successes."""
         decision = _make_decision("deny")
         with patch("httpx.AsyncClient.post", new_callable=AsyncMock, side_effect=Exception("fail")):
             await svc.notify_decision("npm", "pkg", "1.0.0", decision)
-        assert len(svc._send_times) == 0
+        assert len(svc._send_times) == 1
 
 
 class TestRateLimiting:

@@ -233,10 +233,11 @@ class PyPIProxy:
                 ver=version,
             )
 
+        safe_filename = filename.replace('"', "").replace("\\", "").replace("\n", "").replace("\r", "")
         return Response(
             content=content,
             media_type="application/octet-stream",
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+            headers={"Content-Disposition": f'attachment; filename="{safe_filename}"'},
         )
 
     @staticmethod

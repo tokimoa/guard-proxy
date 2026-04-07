@@ -16,6 +16,6 @@ async def show_config(request: Request) -> dict:
     for key in secret_keys:
         val = config.get(key, "")
         if val:
-            config[key] = val[:4] + "****"
+            config[key] = "****"
 
     return config
