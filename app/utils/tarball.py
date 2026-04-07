@@ -323,7 +323,7 @@ def extract_gem_files(content: bytes, filename: str) -> tuple[list[Path], Path]:
 
     try:
         with tarfile.open(fileobj=io.BytesIO(content), mode="r:") as outer:
-            for member in outer.getmembers():
+            for member in outer:
                 if not member.isfile():
                     continue
 

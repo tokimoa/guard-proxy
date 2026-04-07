@@ -68,6 +68,7 @@ class NotificationService:
         }
 
         try:
+            self._send_times.append(time.monotonic())
             async with httpx.AsyncClient(timeout=10.0) as client:
                 resp = await client.post(self._webhook_url, json=payload)
                 if resp.status_code != 200:
@@ -75,6 +76,5 @@ class NotificationService:
                         "Slack webhook returned {status}",
                         status=resp.status_code,
                     )
-            self._send_times.append(time.monotonic())
         except Exception:
             logger.exception("Failed to send Slack notification")

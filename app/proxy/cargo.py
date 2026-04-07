@@ -74,9 +74,8 @@ class CargoProxy:
         path = request.url.path
         logger.debug("Cargo passthrough: {path}", path=path)
 
-        url = f"{self._registry.upstream_url}{path}"
         try:
-            response = await self._registry._client.get(url)
+            response = await self._registry.forward_request(path)
         except Exception as e:
             logger.error("Cargo upstream error: {err}", err=str(e))
             return Response(content="Upstream error", status_code=502)
@@ -209,8 +208,9 @@ class CargoProxy:
                 ver=version,
             )
 
+        safe_filename = filename.replace('"', "").replace("\\", "").replace("\n", "").replace("\r", "")
         return Response(
             content=content,
             media_type="application/x-tar",
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+            headers={"Content-Disposition": f'attachment; filename="{safe_filename}"'},
         )

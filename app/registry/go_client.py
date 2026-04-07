@@ -122,5 +122,14 @@ class GoRegistryClient:
             )
         return response.content
 
+    async def forward_request(self, path: str) -> httpx.Response:
+        """Forward a request to upstream with path validation."""
+        if "://" in path or ".." in path:
+            raise UpstreamRegistryError(url=path, detail="Invalid path in forward_request")
+        try:
+            return await self._client.get(path)
+        except httpx.HTTPError as e:
+            raise UpstreamRegistryError(url=f"{self._upstream_url}{path}", detail=str(e)) from e
+
     async def close(self) -> None:
         await self._client.aclose()

@@ -161,7 +161,7 @@ def config() -> None:
     for key in secret_keys:
         val = data.get(key, "")
         if val:
-            data[key] = val[:4] + "****"
+            data[key] = "****"
 
     for key, val in sorted(data.items()):
         table.add_row(key, str(val))

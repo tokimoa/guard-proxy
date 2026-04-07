@@ -17,6 +17,8 @@ _ECOSYSTEM_MAP = {
     "npm": "npm",
     "pypi": "PyPI",
     "rubygems": "RubyGems",
+    "go": "Go",
+    "cargo": "crates.io",
 }
 
 _SEVERITY_SCORES = {

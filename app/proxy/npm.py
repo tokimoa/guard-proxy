@@ -249,10 +249,11 @@ class NpmProxy:
                 reason=decision.reason,
             )
 
+        safe_filename = tarball_filename.replace('"', "").replace("\\", "").replace("\n", "").replace("\r", "")
         return Response(
             content=tarball_content,
             media_type="application/octet-stream",
-            headers={"Content-Disposition": f'attachment; filename="{tarball_filename}"'},
+            headers={"Content-Disposition": f'attachment; filename="{safe_filename}"'},
         )
 
     def _get_proxy_base_url(self, request: Request) -> str:

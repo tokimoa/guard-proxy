@@ -160,7 +160,7 @@ class TestGoProxyPassthrough:
         mock_response.content = b"v1.0.0\nv1.1.0\n"
         mock_response.status_code = 200
         mock_response.headers = {"content-type": "text/plain"}
-        proxy._registry._client.get = AsyncMock(return_value=mock_response)
+        proxy._registry.forward_request = AsyncMock(return_value=mock_response)
 
         request = MagicMock()
         request.url = MagicMock()
@@ -172,7 +172,7 @@ class TestGoProxyPassthrough:
 
     async def test_passthrough_handles_upstream_error(self):
         proxy = _make_proxy()
-        proxy._registry._client.get = AsyncMock(side_effect=Exception("connection refused"))
+        proxy._registry.forward_request = AsyncMock(side_effect=Exception("connection refused"))
 
         request = MagicMock()
         request.url = MagicMock()
@@ -187,12 +187,12 @@ class TestGoProxyPassthrough:
         mock_response.content = b"{}"
         mock_response.status_code = 200
         mock_response.headers = {"content-type": "application/json"}
-        proxy._registry._client.get = AsyncMock(return_value=mock_response)
+        proxy._registry.forward_request = AsyncMock(return_value=mock_response)
 
         request = MagicMock()
         request.url = MagicMock()
         request.url.path = "/github.com/Azure/azure-sdk/@latest"
 
         await proxy.handle_passthrough(request, "github.com/Azure/azure-sdk")
-        call_path = proxy._registry._client.get.call_args[0][0]
+        call_path = proxy._registry.forward_request.call_args[0][0]
         assert "!azure" in call_path

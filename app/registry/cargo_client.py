@@ -51,8 +51,23 @@ class CargoRegistryClient:
             raise UpstreamRegistryError(url=url, status_code=response.status_code)
         return response.json()
 
+    async def forward_request(self, path: str) -> httpx.Response:
+        """Forward a request to upstream with path validation."""
+        if "://" in path or ".." in path:
+            raise UpstreamRegistryError(url=path, detail="Invalid path in forward_request")
+        url = f"{self._upstream_url}{path}"
+        try:
+            return await self._client.get(url)
+        except httpx.HTTPError as e:
+            raise UpstreamRegistryError(url=url, detail=str(e)) from e
+
     async def download_crate(self, crate_name: str, version: str) -> bytes:
         """Download .crate file from crates.io CDN."""
+        # Validate inputs to prevent path traversal / SSRF
+        if not crate_name or "://" in crate_name or ".." in crate_name or "/" in crate_name:
+            raise UpstreamRegistryError(url=crate_name, detail="Invalid crate name")
+        if not version or "://" in version or ".." in version or "/" in version:
+            raise UpstreamRegistryError(url=version, detail="Invalid version")
         url = f"https://static.crates.io/crates/{crate_name}/{crate_name}-{version}.crate"
         try:
             response = await self._client.get(url)
