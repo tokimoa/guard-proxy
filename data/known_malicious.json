@@ -280918,6 +280918,764 @@
         "versions": [],
         "type": "datadog_dataset",
         "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@43uh3ig43/telemetry-client",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@apexcraft/nano-key",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@aspect-security/argon2",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@businessapp-microsites/apis",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@engagehub/core",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@engagehub/test-claim",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@injectivelabs/sdk-ts",
+        "versions": [
+          "1.20.21"
+        ],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@jaime9008/math-service",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@langgraphjs/toolkit",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@luminarycloudinternal/lcvis-st",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@playerdata-internal/playerdata-core",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@tailwind-core/node",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@tailwind-core/oxide",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@tailwind-core/oxide-android-arm-eabi",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@tailwind-core/oxide-android-arm64",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@tailwind-core/oxide-darwin-arm64",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@tailwind-core/oxide-darwin-x64",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@tailwind-core/oxide-linux-arm-gnueabihf",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@tailwind-core/oxide-linux-arm64-gnu",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@tailwind-core/oxide-linux-arm64-musl",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@tailwind-core/oxide-linux-x64-gnu",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@tailwind-core/oxide-linux-x64-musl",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@tailwind-core/oxide-wasm32-wasi",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@tailwind-core/oxide-win32-x64-msvc",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@tailwind-core/postcss",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@tailwind-core/upgrade",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@tailwind-core/vite",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@tailwind-core/webpack",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "@welcome-onboarding-web/mobile-focus-account-beta-merging",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "airkey-mfa-react",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "ams-ssk",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "base58-cli",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "base58-core",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "big-numer",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "big-numerate",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "big-numerator",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "big256-ts",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "bigint.fs",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "bigint.os",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "binproto",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "bjs-biginteger",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "bjs-lint-builder",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "bjs-lint-builders",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "bn-eslint.js",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "bn-math",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "bootstrap-utils",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "btd-smart",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "bubblesearch",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "bytefaas-sdk",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "chai-as-balanced",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "chai-as-sharpened",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "chai-chain-dom",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "chai-deflect",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "chai-redirection",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "chai-secure",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "client-cookies-agent",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "crypto-base58",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "crypto-promiser",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "debugcli",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "dependency_confusions",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "eth-tick",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "ether-bn.js",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "express-guardian",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "express-guardrail",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "express-initial",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "express-router-engine",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "fastnodemailer",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "flo42-linux-x64",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "fusion-client",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "gitlens",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "goofy-sdk",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "karem-dp",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "mongoose-lean-hooks",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "myclaude-code",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "na-rony",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "na-rony-test",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "na-rony-test-karem",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "nam-os-a-man",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "node-env-detector",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "nodemon-gulp",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "nodemon-node",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "nodemon-sudo",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "nodepathbalance54",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "none123s",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "nonexistent-package",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "notifier-utils",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "notify-funcs",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "npm-doc-dev",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "npm-eslint-helper",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "nuxt-fonts-devtools",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "older_morgan",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "paperclip-adapter-helpers",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "poc-node-npm",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "postcss-animatecss",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "pretty-pino-logger",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "pretty-pino-loggers",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "promo-helper",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "qlkube",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "rabi-snooze-api",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "random-string-64",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "rnx-align-deps",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "rony-testing",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "ruleman-win32-x64-msvc",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "runtimedev-link",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "security-console-ui",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "shopify-internel",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "solana-address-codec",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "testing-d3do",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "thunder-rony",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "ts-await",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "tslint-conf",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "tx-guard-snap",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "txs-builder-lib",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "type-slint",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "ue-jenkins-buildkite",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "unreal-horde-dashboard",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "vite-json-pwa",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "vps-new-manager",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "workspace-scripts",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "wsh4-nmp",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "wsh4_npm",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "wxt-module-layers",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "xnder-sdk-js",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "zluri-ad-connector",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "zod-pino444",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
+      },
+      {
+        "name": "zredis-typed",
+        "versions": [],
+        "type": "datadog_dataset",
+        "description": "From DataDog malicious-software-packages-dataset"
       }
     ],
     "pypi": [
@@ -292034,16 +292792,34 @@
   },
   "_high_impact_alerts": [
     {
-      "name": "@mastra/ai-sdk",
+      "name": "@injectivelabs/sdk-ts",
       "ecosystem": "npm",
-      "weekly_downloads": 233315,
+      "weekly_downloads": 41728,
+      "severity": "HIGH"
+    },
+    {
+      "name": "@tailwind-core/node",
+      "ecosystem": "npm",
+      "weekly_downloads": 132449,
       "severity": "CRITICAL"
     },
     {
-      "name": "@mastra/auth",
+      "name": "@tailwind-core/oxide",
       "ecosystem": "npm",
-      "weekly_downloads": 22047,
-      "severity": "HIGH"
+      "weekly_downloads": 132942,
+      "severity": "CRITICAL"
+    },
+    {
+      "name": "@tailwind-core/oxide-linux-x64-gnu",
+      "ecosystem": "npm",
+      "weekly_downloads": 138107,
+      "severity": "CRITICAL"
+    },
+    {
+      "name": "@tailwind-core/postcss",
+      "ecosystem": "npm",
+      "weekly_downloads": 132942,
+      "severity": "CRITICAL"
     }
   ]
 }
